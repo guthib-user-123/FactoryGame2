@@ -179,10 +179,11 @@ public final class TileWorld {
         // If only left valid -> FL
         // If only right valid -> FR
         // If neither valid -> keep current (or default to FL/FR/LR; your choice)
-        if (lOk && rOk) s.setVariant(SplitterEntity.Variant.FL);
+        if (lOk && rOk) s.setVariant(SplitterEntity.Variant.LR);
         else if (fOk && lOk) s.setVariant(SplitterEntity.Variant.FL);
         else if (fOk && rOk) s.setVariant(SplitterEntity.Variant.FR);
-        // else: leave it alone (or default FL)
+// else: leave it alone (or default)
+
 
         // else leave it alone (no good outputs)
     }
