@@ -17,11 +17,9 @@ public class WorldGrid {
     public static final int TILE_SELLPAD = 3;
     public static final int TILE_SPAWNER = 4;
     public static final int TILE_CRUSHER = 5;
-    public static final int TILE_SPLITTER_FL = 6; // forward + left
-    public static final int TILE_SPLITTER_FR = 7; // forward + right
-    public static final int TILE_SPLITTER_LR = 8; // left + right
-    public static final int TILE_MERGER = 9;
-    public static final int TILE_PRESS = 10;
+    public static final int TILE_SPLITTER = 6;
+    public static final int TILE_MERGER = 7;
+    public static final int TILE_PRESS = 8;
 
     public final float WORLD_W;
     public final float WORLD_H;
@@ -112,7 +110,7 @@ public class WorldGrid {
         fh.writeString(json.prettyPrint(s), false);
     }
 
-    public void loadWithTileWorld(String name, TileWorld tileWorld) {
+    public void loadWithTileWorld(String name) {
         FileHandle fh = Gdx.files.local(name);
         if (!fh.exists()) return;
 

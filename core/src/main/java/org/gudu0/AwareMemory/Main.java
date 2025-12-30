@@ -18,12 +18,13 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
+import org.gudu0.AwareMemory.entities.SplitterEntity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 
-@SuppressWarnings({"FieldMayBeFinal", "UnusedAssignment"})
+@SuppressWarnings({"FieldMayBeFinal", "UnusedAssignment", "EnhancedSwitchMigration"})
 public class Main extends ApplicationAdapter {
     private WorldGrid world;
     private PlayerSystem player;
@@ -45,9 +46,7 @@ public class Main extends ApplicationAdapter {
     private static final float COST_SELLPAD  = 10f;
     private static final float COST_SPAWNER  = 25f;
     private static final float COST_CRUSHER  = 20f;
-    private static final float COST_SPLIT_FL = 12f;
-    private static final float COST_SPLIT_FR = 12f;
-    private static final float COST_SPLIT_LR = 12f;
+    private static final float COST_SPLITTER = 12f;
     private static final float COST_MERGER = 12f;
     private static final float COST_PRESS = 25f;
 
@@ -109,15 +108,9 @@ public class Main extends ApplicationAdapter {
     @SuppressWarnings("unchecked")
     private final Animation<TextureRegion>[] crusherAnim = new Animation[4];
     private final ArrayList<Texture> crusherTextures = new ArrayList<>();
-    @SuppressWarnings("unchecked")
-    private final Animation<TextureRegion>[] splitterLRAnim = new Animation[4];
-    private final ArrayList<Texture> splitterLRTextures = new ArrayList<>();
-    @SuppressWarnings("unchecked")
-    private final Animation<TextureRegion>[] splitterFRAnim = new Animation[4];
-    private final ArrayList<Texture> splitterFRTextures = new ArrayList<>();
-    @SuppressWarnings("unchecked")
-    private final Animation<TextureRegion>[] splitterFLAnim = new Animation[4];
-    private final ArrayList<Texture> splitterFLTextures = new ArrayList<>();
+
+    private TextureRegion[][] splitterSprite = new TextureRegion[4][3]; // 0=FL,1=FR,2=LR
+    private final ArrayList<Texture> splitterSpriteTextures = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     private final Animation<TextureRegion>[] pressAnim = new Animation[4];
@@ -216,20 +209,44 @@ public class Main extends ApplicationAdapter {
             crusherAnim[2] = makeAnim("crusher/left/crusher_left", 1, false, crusherTextures);
             crusherAnim[3] = makeAnim("crusher/up/crusher_up", 1, false, crusherTextures);
 
-            splitterLRAnim[0] = makeAnim("splitterLR/right/splitter_LR_right", 1, false, splitterLRTextures);
-            splitterLRAnim[1] = makeAnim("splitterLR/down/splitter_LR_down", 1, false, splitterLRTextures);
-            splitterLRAnim[2] = makeAnim("splitterLR/left/splitter_LR_left", 1, false, splitterLRTextures);
-            splitterLRAnim[3] = makeAnim("splitterLR/up/splitter_LR_up", 1, false, splitterLRTextures);
+//            splitterLRAnim[0] = makeAnim("splitterLR/right/splitter_LR_right", 1, false, splitterLRTextures);
+//            splitterLRAnim[1] = makeAnim("splitterLR/down/splitter_LR_down", 1, false, splitterLRTextures);
+//            splitterLRAnim[2] = makeAnim("splitterLR/left/splitter_LR_left", 1, false, splitterLRTextures);
+//            splitterLRAnim[3] = makeAnim("splitterLR/up/splitter_LR_up", 1, false, splitterLRTextures);
+//
+//            splitterFRAnim[0] = makeAnim("splitterFR/right/splitter_FR_right", 1, false, splitterFRTextures);
+//            splitterFRAnim[1] = makeAnim("splitterFR/down/splitter_FR_down", 1, false, splitterFRTextures);
+//            splitterFRAnim[2] = makeAnim("splitterFR/left/splitter_FR_left", 1, false, splitterFRTextures);
+//            splitterFRAnim[3] = makeAnim("splitterFR/up/splitter_FR_up", 1, false, splitterFRTextures);
+//
+//            splitterFLAnim[0] = makeAnim("splitterFL/right/splitter_FL_right", 1, false, splitterFLTextures);
+//            splitterFLAnim[1] = makeAnim("splitterFL/down/splitter_FL_down", 1, false, splitterFLTextures);
+//            splitterFLAnim[2] = makeAnim("splitterFL/left/splitter_FL_left", 1, false, splitterFLTextures);
+//            splitterFLAnim[3] = makeAnim("splitterFL/up/splitter_FL_up", 1, false, splitterFLTextures);
 
-            splitterFRAnim[0] = makeAnim("splitterFR/right/splitter_FR_right", 1, false, splitterFRTextures);
-            splitterFRAnim[1] = makeAnim("splitterFR/down/splitter_FR_down", 1, false, splitterFRTextures);
-            splitterFRAnim[2] = makeAnim("splitterFR/left/splitter_FR_left", 1, false, splitterFRTextures);
-            splitterFRAnim[3] = makeAnim("splitterFR/up/splitter_FR_up", 1, false, splitterFRTextures);
+            // Splitter sprites: [outRot][variant] where variant: 0=FL,1=FR,2=LR
+            // outRot: 0=E,1=S,2=W,3=N
 
-            splitterFLAnim[0] = makeAnim("splitterFL/right/splitter_FL_right", 1, false, splitterFLTextures);
-            splitterFLAnim[1] = makeAnim("splitterFL/down/splitter_FL_down", 1, false, splitterFLTextures);
-            splitterFLAnim[2] = makeAnim("splitterFL/left/splitter_FL_left", 1, false, splitterFLTextures);
-            splitterFLAnim[3] = makeAnim("splitterFL/up/splitter_FL_up", 1, false, splitterFLTextures);
+            // Output EAST (rot 0)
+            splitterSprite[0][0] = loadSplitter("splitterFL/right/splitter_FL_right1.png");
+            splitterSprite[0][1] = loadSplitter("splitterFR/right/splitter_FR_right1.png");
+            splitterSprite[0][2] = loadSplitter("splitterLR/right/splitter_LR_right1.png");
+
+            // Output SOUTH (rot 1)
+            splitterSprite[1][0] = loadSplitter("splitterFL/down/splitter_FL_down1.png");
+            splitterSprite[1][1] = loadSplitter("splitterFR/down/splitter_FR_down1.png");
+            splitterSprite[1][2] = loadSplitter("splitterLR/down/splitter_LR_down1.png");
+
+            // Output WEST (rot 2)
+            splitterSprite[2][0] = loadSplitter("splitterFL/left/splitter_FL_left1.png");
+            splitterSprite[2][1] = loadSplitter("splitterFR/left/splitter_FR_left1.png");
+            splitterSprite[2][2] = loadSplitter("splitterLR/left/splitter_LR_left1.png");
+
+            // Output NORTH (rot 3)
+            splitterSprite[3][0] = loadSplitter("splitterFL/up/splitter_FL_up1.png");
+            splitterSprite[3][1] = loadSplitter("splitterFR/up/splitter_FR_up1.png");
+            splitterSprite[3][2] = loadSplitter("splitterLR/up/splitter_LR_up1.png");
+
 
             pressAnim[0] = makeAnim("press/press", 1, false, pressTextures);
             pressAnim[1] = makeAnim("press/press", 1, false, pressTextures);
@@ -299,9 +316,12 @@ public class Main extends ApplicationAdapter {
             registerTile(WorldGrid.TILE_PRESS,    COST_PRESS,    true, pressAnim,    false);
 
             // not manually placeable (auto-upgrade)
-            registerTile(WorldGrid.TILE_SPLITTER_FL, COST_SPLIT_FL, false, splitterFLAnim, false);
-            registerTile(WorldGrid.TILE_SPLITTER_FR, COST_SPLIT_FR, false, splitterFRAnim, false);
-            registerTile(WorldGrid.TILE_SPLITTER_LR, COST_SPLIT_LR, false, splitterLRAnim, false);
+            // Splitter is one tile id now; variant chosen at runtime.
+            // Register cost/placeability, and set icon from sprites.
+            costByTile[WorldGrid.TILE_SPLITTER] = COST_SPLITTER;   // pick one cost constant (or reuse LR cost)
+            placeableByTile[WorldGrid.TILE_SPLITTER] = false;      // auto-upgrade only
+            iconByTileId[WorldGrid.TILE_SPLITTER] = splitterSprite[0][2]; // show LR east as the icon (or pick any)
+
 
             // merger uses special sprite, so just set icon directly (and cost/placeable)
             costByTile[WorldGrid.TILE_MERGER] = COST_MERGER;
@@ -379,13 +399,7 @@ public class Main extends ApplicationAdapter {
         for (Texture t : crusherTextures){
             t.dispose();
         }
-        for (Texture t : splitterFLTextures){
-            t.dispose();
-        }
-        for (Texture t : splitterFRTextures){
-            t.dispose();
-        }
-        for (Texture t : splitterLRTextures){
+        for (Texture t : splitterSpriteTextures) {
             t.dispose();
         }
         for (Texture t : conveyorTurnTextures){
@@ -406,7 +420,7 @@ public class Main extends ApplicationAdapter {
         conveyorTurnTextures.clear();
         mergerSpriteTextures.clear();
         pressTextures.clear();
-
+        splitterSpriteTextures.clear();
     }
 
     private TextureRegion loadTurn(String path) {
@@ -419,6 +433,12 @@ public class Main extends ApplicationAdapter {
         mergerSpriteTextures.add(t);
         return new TextureRegion(t);
     }
+    private TextureRegion loadSplitter(String path) {
+        Texture t = new Texture(Gdx.files.internal(path));
+        splitterSpriteTextures.add(t);
+        return new TextureRegion(t);
+    }
+
 
 
     private void drawDebugOverlay() {
@@ -529,7 +549,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void loadGame() {
-        world.loadWithTileWorld("save2", tileWorld);
+        world.loadWithTileWorld("save2");
 
         // rebuild entities from tiles/rots
         for (int x = 0; x < world.wCells; x++) {
@@ -731,7 +751,7 @@ public class Main extends ApplicationAdapter {
         return rotValueForDir;
     }
 
-    private void registerTile(int tileId, float cost, boolean placeable, Animation<TextureRegion>[] anim4, boolean iconLoop) {
+    private void registerTile(int tileId, float cost, @SuppressWarnings("SameParameterValue") boolean placeable, Animation<TextureRegion>[] anim4, boolean iconLoop) {
         if (tileId < 0 || tileId >= MAX_TILE_ID) {
             throw new RuntimeException("tileId out of range: " + tileId);
         }
@@ -766,6 +786,7 @@ public class Main extends ApplicationAdapter {
         anim.setPlayMode(Animation.PlayMode.LOOP);
         return anim;
     }
+    @SuppressWarnings("DataFlowIssue")
     public void doPlacedTilesDraw() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -849,6 +870,17 @@ public class Main extends ApplicationAdapter {
                         batch.end();
                         batch.begin();
                     }
+                } else if (id == WorldGrid.TILE_SPLITTER) {
+                    SplitterEntity s = (SplitterEntity) tileWorld.getEntity(x, y);
+                    int v = 0;
+                    if (s != null) {
+                        switch (s.getVariant()) {
+                            case FL: v = 0; break;
+                            case FR: v = 1; break;
+                            case LR: v = 2; break;
+                        }
+                    }
+                    batch.draw(splitterSprite[outRot][v], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
                 } else {
                     Animation<TextureRegion> a = animByTileRot[id][outRot];
                     if (a != null) {

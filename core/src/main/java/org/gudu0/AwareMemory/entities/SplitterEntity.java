@@ -44,13 +44,13 @@ public final class SplitterEntity extends TileEntity {
         for (int pass = 0; pass < passes; pass++) {
             // 1) Branch exits try to handoff (exit-first)
             stepExit(world, currentTick, Branch.FORWARD);
-            if (hasLeft())  stepExit(world, currentTick, Branch.LEFT);
-            if (hasRight()) stepExit(world, currentTick, Branch.RIGHT);
+            stepExit(world, currentTick, Branch.LEFT);
+            stepExit(world, currentTick, Branch.RIGHT);
 
             // 2) Move within branches toward exits
             stepBranchInternal(Branch.FORWARD);
-            if (hasLeft())  stepBranchInternal(Branch.LEFT);
-            if (hasRight()) stepBranchInternal(Branch.RIGHT);
+            stepBranchInternal(Branch.LEFT);
+            stepBranchInternal(Branch.RIGHT);
 
             // 3) Decision cell routes into one of the branch first-cells
             stepDecision(world, currentTick);
@@ -205,6 +205,7 @@ public final class SplitterEntity extends TileEntity {
         SplitterEntity.Branch branchToReturn = toggle ? Branch.LEFT : Branch.FORWARD; //Default to FL
         switch (variant) {
             case FL: {
+                //noinspection DataFlowIssue
                 branchToReturn = (toggle ? Branch.LEFT : Branch.FORWARD);
                 break;
             }
@@ -216,7 +217,7 @@ public final class SplitterEntity extends TileEntity {
                 branchToReturn = (toggle ? Branch.RIGHT : Branch.LEFT);
                 break;
             }
-        };
+        }
         return branchToReturn;
     }
 
@@ -225,6 +226,7 @@ public final class SplitterEntity extends TileEntity {
         SplitterEntity.Branch branchToReturn = toggle ? Branch.FORWARD : Branch.LEFT; //Default to FL
         switch (variant) {
             case FL: {
+                //noinspection DataFlowIssue
                 branchToReturn = (toggle ? Branch.FORWARD : Branch.LEFT);
                 break;
             }
@@ -236,7 +238,7 @@ public final class SplitterEntity extends TileEntity {
                 branchToReturn = (toggle ? Branch.LEFT : Branch.RIGHT);
                 break;
             }
-        };
+        }
         return branchToReturn;
     }
 
@@ -245,6 +247,7 @@ public final class SplitterEntity extends TileEntity {
         Dir returnedValue = travel; // Default to forward
         switch (b) {
             case FORWARD: {
+                //noinspection DataFlowIssue
                 returnedValue = travel;
                 break;
             }
@@ -256,7 +259,7 @@ public final class SplitterEntity extends TileEntity {
                 returnedValue = travel.right();
                 break;
             }
-        };
+        }
         return returnedValue;
     }
 
@@ -276,7 +279,7 @@ public final class SplitterEntity extends TileEntity {
                 returnedCell = new int[]{2, 1};
                 break;
             }
-        };
+        }
         return returnedCell;
     }
 
@@ -296,7 +299,7 @@ public final class SplitterEntity extends TileEntity {
                 returnedCell2 = new int[]{2, 0};   // south edge center
                 break;
             }
-        };
+        }
         return returnedCell2;
     }
 

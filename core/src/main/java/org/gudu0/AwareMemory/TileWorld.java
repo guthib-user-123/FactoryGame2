@@ -179,9 +179,11 @@ public final class TileWorld {
         // If only left valid -> FL
         // If only right valid -> FR
         // If neither valid -> keep current (or default to FL/FR/LR; your choice)
-        if (lOk && rOk) s.setVariant(SplitterEntity.Variant.LR);
-        else if (lOk) s.setVariant(SplitterEntity.Variant.FL);
-        else if (rOk) s.setVariant(SplitterEntity.Variant.FR);
+        if (lOk && rOk) s.setVariant(SplitterEntity.Variant.FL);
+        else if (fOk && lOk) s.setVariant(SplitterEntity.Variant.FL);
+        else if (fOk && rOk) s.setVariant(SplitterEntity.Variant.FR);
+        // else: leave it alone (or default FL)
+
         // else leave it alone (no good outputs)
     }
 
@@ -217,15 +219,10 @@ public final class TileWorld {
             case WorldGrid.TILE_SMELTER:
                 created = new SmelterEntity(cx, cy, rot);
                 break;
-            case WorldGrid.TILE_SPLITTER_FL:
-                created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.FL);
+            case WorldGrid.TILE_SPLITTER:
+                created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.FL); // temp default
                 break;
-            case WorldGrid.TILE_SPLITTER_FR:
-                created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.FR);
-                break;
-            case WorldGrid.TILE_SPLITTER_LR:
-                created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.LR);
-                break;
+
             case WorldGrid.TILE_MERGER:
                 created = new MergerEntity(cx, cy, rot);
                 break;
@@ -428,9 +425,8 @@ public final class TileWorld {
         boolean lOk = canOutputTo(cx, cy, out.left());
         boolean rOk = canOutputTo(cx, cy, out.right());
 
-        if (lOk && rOk) return WorldGrid.TILE_SPLITTER_LR;
-        if (fOk && lOk) return WorldGrid.TILE_SPLITTER_FL;
-        if (fOk && rOk) return WorldGrid.TILE_SPLITTER_FR;
+        if ((lOk && rOk) || (fOk && lOk) || (fOk && rOk)) return WorldGrid.TILE_SPLITTER;
+
 
         return WorldGrid.TILE_CONVEYOR;
     }
