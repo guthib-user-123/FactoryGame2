@@ -2,8 +2,6 @@ package org.gudu0.AwareMemory;
 
 import  org.gudu0.AwareMemory.entities.*;
 
-import org.gudu0.AwareMemory.entities.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +19,7 @@ public final class TileWorld {
     private int tick = 0;
 
     private int nextItemId = 1;
-    private final Map<Integer, Item> items = new HashMap<Integer, Item>();
+    private final Map<Integer, Item> items = new HashMap<>();
 
 
     // Economy output for the frame
@@ -71,7 +69,7 @@ public final class TileWorld {
     }
 
     public ArrayList<WorldGrid.ItemSave> exportItemSaves() {
-        ArrayList<WorldGrid.ItemSave> out = new ArrayList<WorldGrid.ItemSave>();
+        ArrayList<WorldGrid.ItemSave> out = new ArrayList<>();
 
         for (int y = 0; y < world.hCells; y++) {
             for (int x = 0; x < world.wCells; x++) {
@@ -167,9 +165,11 @@ public final class TileWorld {
         if (!(getEntity(cx, cy) instanceof SplitterEntity)) return;
         SplitterEntity s = (SplitterEntity) getEntity(cx, cy);
 
+        assert s != null;
         Dir travel = Dir.fromRot(s.rot);
 
         // Check which output neighbors *exist and accept from our side*
+        //noinspection unused
         boolean fOk = canOutputTo(cx, cy, travel);
         boolean lOk = canOutputTo(cx, cy, travel.left());
         boolean rOk = canOutputTo(cx, cy, travel.right());
@@ -261,14 +261,13 @@ public final class TileWorld {
     }
 
     // Spawn into a specific tile’s entry, if valid
-    public boolean spawnOnTile(int cx, int cy, ItemType type, float value, Dir fromEdge) {
+    public void spawnOnTile(int cx, int cy, ItemType type, float value, Dir fromEdge) {
         TileEntity te = getEntity(cx, cy);
-        if (te == null) return false;
+        if (te == null) return;
         Item it = new Item(nextItemId++, type, value);
-        if (!te.canAccept(it, fromEdge)) return false;
+        if (!te.canAccept(it, fromEdge)) return;
         items.put(it.id, it);
         te.accept(it, fromEdge, tick);
-        return true;
     }
 
     public void update(float dt) {
@@ -326,6 +325,7 @@ public final class TileWorld {
         if (!(getEntity(cx, cy) instanceof ConveyorEntity)) return;
         ConveyorEntity c = (ConveyorEntity) getEntity(cx, cy);
 
+        assert c != null;
         Dir out = Dir.fromRot(c.rot);
 
         // Candidate input edges for this conveyor (based on rot/output)
