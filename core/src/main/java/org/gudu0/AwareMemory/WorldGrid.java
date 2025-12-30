@@ -34,6 +34,7 @@ public class WorldGrid {
 
     // After loadWithTileWorld(), we stash loaded items until Main finishes rebuilding entities.
     private ItemSave[] pendingItems = null;
+    private TileSave[] pendingTileSaves = null;
     private int pendingNextItemId = 0;
 
 
@@ -96,10 +97,13 @@ public class WorldGrid {
             }
         }
 
-        // New (v2): items + next id
+        // New: items + machine state
         s.nextItemId = tileWorld.exportNextItemId();
         s.tileSaves = tileWorld.exportTileSaves();
+
+        ArrayList<ItemSave> list = tileWorld.exportItemSaves();
         s.items = list.toArray(new ItemSave[0]);
+
 
         Json json = new Json();
         FileHandle fh = Gdx.files.local(name);
@@ -129,14 +133,17 @@ public class WorldGrid {
         // Stash items for later. Old saves: s.items == null, s.nextItemId == 0.
         pendingItems = s.items;
         pendingNextItemId = s.nextItemId;
+        pendingTileSaves = s.tileSaves;
     }
 
     public void applyLoadedItemsTo(TileWorld tileWorld) {
+        tileWorld.importItemSaves(pendingItems, pendingNextItemId);
         tileWorld.importTileSaves(pendingTileSaves);
-
 
         pendingItems = null;
         pendingNextItemId = 0;
+        pendingTileSaves = null;
     }
+
 
 }

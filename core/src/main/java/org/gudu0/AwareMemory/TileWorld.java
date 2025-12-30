@@ -21,7 +21,8 @@ public final class TileWorld {
     private int tick = 0;
 
     private int nextItemId = 1;
-    private final Map<Integer, Item> items = new HashMap<>();
+    private final Map<Integer, Item> items = new HashMap<Integer, Item>();
+
 
     // Economy output for the frame
     private float earnedThisFrame = 0f;
@@ -69,6 +70,82 @@ public final class TileWorld {
         return out.toArray(new WorldGrid.TileSave[0]);
     }
 
+    public ArrayList<WorldGrid.ItemSave> exportItemSaves() {
+        ArrayList<WorldGrid.ItemSave> out = new ArrayList<WorldGrid.ItemSave>();
+
+        for (int y = 0; y < world.hCells; y++) {
+            for (int x = 0; x < world.wCells; x++) {
+                TileEntity te = entities[x][y];
+                if (te == null) continue;
+
+                for (int u = 0; u < TileEntity.N; u++) {
+                    for (int v = 0; v < TileEntity.N; v++) {
+                        int id = te.occ[u][v];
+                        if (id == TileEntity.EMPTY) continue;
+
+                        Item it = items.get(id);
+                        if (it == null) continue;
+
+                        WorldGrid.ItemSave s = new WorldGrid.ItemSave();
+                        s.id = it.id;
+                        s.type = it.type.name();
+                        s.value = it.value;
+                        s.cx = x; s.cy = y;
+                        s.u = u; s.v = v;
+                        out.add(s);
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    public void importItemSaves(WorldGrid.ItemSave[] itemsFromSave, int nextIdFromSave) {
+        // Clear runtime items + occupancy
+        items.clear();
+        for (int y = 0; y < world.hCells; y++) {
+            for (int x = 0; x < world.wCells; x++) {
+                TileEntity te = entities[x][y];
+                if (te == null) continue;
+                for (int u = 0; u < TileEntity.N; u++) {
+                    for (int v = 0; v < TileEntity.N; v++) {
+                        te.occ[u][v] = TileEntity.EMPTY;
+                    }
+                }   
+            }
+        }
+
+        int maxId = 0;
+
+        if (itemsFromSave != null) {
+            for (WorldGrid.ItemSave s : itemsFromSave) {
+                if (s == null) continue;
+                if (!world.inBoundsCell(s.cx, s.cy)) continue;
+                if (s.u < 0 || s.u >= TileEntity.N || s.v < 0 || s.v >= TileEntity.N) continue;
+
+                TileEntity te = entities[s.cx][s.cy];
+                if (te == null) continue;
+                if (te.occ[s.u][s.v] != TileEntity.EMPTY) continue;
+
+                ItemType type;
+                try {
+                    type = ItemType.valueOf(s.type);
+                } catch (Exception e) {
+                    continue;
+                }
+
+                Item it = new Item(s.id, type, s.value);
+                items.put(it.id, it);
+                te.occ[s.u][s.v] = it.id;
+
+                if (it.id > maxId) maxId = it.id;
+            }
+        }
+
+        int candidate = nextIdFromSave;
+        if (candidate <= 0 || candidate <= maxId) candidate = maxId + 1;
+        nextItemId = candidate;
+    }
 
     public void importTileSaves(WorldGrid.TileSave[] saves) {
         if (saves == null) return;
@@ -85,7 +162,6 @@ public final class TileWorld {
 
 
     public int exportNextItemId() { return nextItemId; }
-
 
     private void refreshSplitterVariantAt(int cx, int cy) {
         if (!(getEntity(cx, cy) instanceof SplitterEntity)) return;

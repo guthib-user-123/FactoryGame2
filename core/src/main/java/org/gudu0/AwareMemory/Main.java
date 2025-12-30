@@ -733,6 +733,7 @@ public class Main extends ApplicationAdapter {
         applyHotbarSelection();
     }
 
+    @SuppressWarnings("DuplicateBranchesInSwitch")
     private boolean isManuallyPlaceable(int tile) {
         boolean placeableTile = false;
         switch (tile) {
