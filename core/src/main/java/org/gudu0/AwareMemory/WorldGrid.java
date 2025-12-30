@@ -21,7 +21,7 @@ public class WorldGrid {
     public static final int TILE_SPLITTER_FR = 7; // forward + right
     public static final int TILE_SPLITTER_LR = 8; // left + right
     public static final int TILE_MERGER = 9;
-
+    public static final int TILE_PRESS = 10;
 
     public final float WORLD_W;
     public final float WORLD_H;

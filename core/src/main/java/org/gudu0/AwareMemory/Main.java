@@ -22,10 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
+@SuppressWarnings({"FieldMayBeFinal", "UnusedAssignment"})
 public class Main extends ApplicationAdapter {
     private WorldGrid world;
     private PlayerSystem player;
-//    private ItemsSystem itemsSys;
     private TileWorld tileWorld;
     private Hud hud;
 
@@ -48,6 +48,7 @@ public class Main extends ApplicationAdapter {
     private static final float COST_SPLIT_FR = 12f;
     private static final float COST_SPLIT_LR = 12f;
     private static final float COST_MERGER = 12f;
+    private static final float COST_PRESS = 25f;
 
     private static final int HOTBAR_SLOTS = 10;
     // Each page is an array of tile IDs.
@@ -59,7 +60,7 @@ public class Main extends ApplicationAdapter {
             WorldGrid.TILE_SELLPAD,
             WorldGrid.TILE_SPAWNER,
             WorldGrid.TILE_CRUSHER,
-            0,
+            WorldGrid.TILE_PRESS,
             0,
             0,
             0,
@@ -108,6 +109,10 @@ public class Main extends ApplicationAdapter {
     private final Animation<TextureRegion>[] splitterFLAnim = new Animation[4];
     private final ArrayList<Texture> splitterFLTextures = new ArrayList<>();
 
+    @SuppressWarnings("unchecked")
+    private final Animation<TextureRegion>[] pressAnim = new Animation[4];
+    private final ArrayList<Texture> pressTextures = new ArrayList<>();
+
     private TextureRegion[][] mergerSprite = new TextureRegion[4][3]; // [outRot][variant]
     private final ArrayList<Texture> mergerSpriteTextures = new ArrayList<>();
 
@@ -133,13 +138,12 @@ public class Main extends ApplicationAdapter {
 
 
     // --- METHODS --- \\
-    @SuppressWarnings({"SpellCheckingInspection", "DataFlowIssue"})
+    @SuppressWarnings({"SpellCheckingInspection"})
     @Override
     public void create() {
         world = new WorldGrid();
         playerTex = new Texture(Gdx.files.internal("player.png"));
         player = new PlayerSystem(playerTex, world);
-//        itemsSys = new ItemsSystem();
         tileWorld = new TileWorld(world);
         hud = new Hud();
 
@@ -217,6 +221,11 @@ public class Main extends ApplicationAdapter {
             splitterFLAnim[2] = makeAnim("splitterFL/left/splitter_FL_left", 1, false);
             splitterFLAnim[3] = makeAnim("splitterFL/up/splitter_FL_up", 1, false);
 
+            pressAnim[0] = makeAnim("press/press", 1, false);
+            pressAnim[1] = makeAnim("press/press", 1, false);
+            pressAnim[2] = makeAnim("press/press", 1, false);
+            pressAnim[3] = makeAnim("press/press", 1, false);
+
             // outRot: 0=E,1=S,2=W,3=N
             // Output NORTH (rot 3)
             mergerSprite[3][0] = loadMerger("Conveyor/mergeUp/conveyor_merge_EWN.png");
@@ -237,8 +246,6 @@ public class Main extends ApplicationAdapter {
             mergerSprite[2][0] = loadMerger("Conveyor/mergeLeft/conveyor_merge_NSW.png");
             mergerSprite[2][1] = loadMerger("Conveyor/mergeLeft/conveyor_merge_NEW.png");
             mergerSprite[2][2] = loadMerger("Conveyor/mergeLeft/conveyor_merge_SEW.png");
-
-
 
             // conveyorTurn[rot][variant]
             // rot: OUTPUT direction (0=E,1=S,2=W,3=N)
@@ -271,16 +278,7 @@ public class Main extends ApplicationAdapter {
 
         // Hotbar Icons
         {
-            int maxId = 0;
-            maxId = Math.max(maxId, WorldGrid.TILE_CONVEYOR);
-            maxId = Math.max(maxId, WorldGrid.TILE_SMELTER);
-            maxId = Math.max(maxId, WorldGrid.TILE_SELLPAD);
-            maxId = Math.max(maxId, WorldGrid.TILE_SPAWNER);
-            maxId = Math.max(maxId, WorldGrid.TILE_CRUSHER);
-            maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_FL);
-            maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_FR);
-            maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_LR);
-            maxId = Math.max(maxId, WorldGrid.TILE_MERGER);
+            int maxId = getMaxId();
 
             iconByTileId = new TextureRegion[maxId + 1];
 
@@ -292,12 +290,27 @@ public class Main extends ApplicationAdapter {
             iconByTileId[WorldGrid.TILE_SPAWNER] = spawnerAnim[0].getKeyFrame(0f, true);
             iconByTileId[WorldGrid.TILE_SELLPAD] = sellPadAnim[0].getKeyFrame(0f, false); // if this is a TextureRegion already; otherwise new TextureRegion(sellpadTex)
             iconByTileId[WorldGrid.TILE_MERGER] = mergerSprite[0][0];
-
-
             iconByTileId[WorldGrid.TILE_SPLITTER_FL] = splitterFLAnim[0].getKeyFrame(0f, false); // whatever your arrays are
             iconByTileId[WorldGrid.TILE_SPLITTER_FR] = splitterFRAnim[0].getKeyFrame(0f, false);
             iconByTileId[WorldGrid.TILE_SPLITTER_LR] = splitterLRAnim[0].getKeyFrame(0f, false);
+            iconByTileId[WorldGrid.TILE_PRESS] = pressAnim[0].getKeyFrame(0f, false);
         }
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    private int getMaxId() {
+        int maxId = 0;
+        maxId = Math.max(maxId, WorldGrid.TILE_CONVEYOR);
+        maxId = Math.max(maxId, WorldGrid.TILE_SMELTER);
+        maxId = Math.max(maxId, WorldGrid.TILE_SELLPAD);
+        maxId = Math.max(maxId, WorldGrid.TILE_SPAWNER);
+        maxId = Math.max(maxId, WorldGrid.TILE_CRUSHER);
+        maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_FL);
+        maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_FR);
+        maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_LR);
+        maxId = Math.max(maxId, WorldGrid.TILE_MERGER);
+        maxId = Math.max(maxId, WorldGrid.TILE_PRESS);
+        return maxId;
     }
 
     @Override
@@ -328,7 +341,6 @@ public class Main extends ApplicationAdapter {
             drawDebugOverlay();
         }
         hud.draw(batch, money, tileWorld.itemCount(), hotbarPage, hotbarSlot, hotbarPages[hotbarPage], iconByTileId, whiteRegion);
-
 
     }
 
@@ -384,6 +396,9 @@ public class Main extends ApplicationAdapter {
         for (Texture t : mergerSpriteTextures){
             t.dispose();
         }
+        for (Texture t : pressTextures){
+            t.dispose();
+        }
 
         conveyorTextures.clear();
         smelterTextures.clear();
@@ -392,6 +407,7 @@ public class Main extends ApplicationAdapter {
         crusherTextures.clear();
         conveyorTurnTextures.clear();
         mergerSpriteTextures.clear();
+        pressTextures.clear();
 
     }
 
@@ -476,9 +492,9 @@ public class Main extends ApplicationAdapter {
                 Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
             }
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) saveGame("save2");
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) saveGame();
         if (Gdx.input.isKeyJustPressed(Input.Keys.F9)) {
-            loadGame("save2");
+            loadGame();
             // Second pass: now that all entities exist, refresh conveyor shapes everywhere
             tileWorld.refreshAllConveyorShapes();
         }
@@ -510,12 +526,12 @@ public class Main extends ApplicationAdapter {
     private int worldCellsX() { return world.wCells; }
     private int worldCellsY() { return world.hCells; }
 
-    private void saveGame(String name) {
-        world.saveWithTileWorld(name, tileWorld);
+    private void saveGame() {
+        world.saveWithTileWorld("save2", tileWorld);
     }
 
-    private void loadGame(String name) {
-        world.loadWithTileWorld(name, tileWorld);
+    private void loadGame() {
+        world.loadWithTileWorld("save2", tileWorld);
 
         // rebuild entities from tiles/rots
         for (int x = 0; x < world.wCells; x++) {
@@ -655,11 +671,17 @@ public class Main extends ApplicationAdapter {
                 batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
                 break;
             }
+            case WorldGrid.TILE_PRESS: {
+                TextureRegion frame = pressAnim[selectedRot].getKeyFrame(0f);
+                batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
+                break;
+            }
         }
 
         batch.setColor(1f, 1f, 1f, 1f);
         batch.end();
     }
+    @SuppressWarnings("UnusedAssignment")
     private float getTileCost(int tile) {
         float costToPlace = 0f;
         switch (tile) {
@@ -698,13 +720,16 @@ public class Main extends ApplicationAdapter {
             case WorldGrid.TILE_MERGER: {
                 costToPlace = COST_MERGER;
                 break;
-
+            }
+            case WorldGrid.TILE_PRESS: {
+                costToPlace = COST_PRESS;
+                break;
             }
             default: {
                costToPlace = 0f;
                 break;
             }
-        };
+        }
         return costToPlace;
     }
     public void doSelectionInput() {
@@ -735,11 +760,6 @@ public class Main extends ApplicationAdapter {
             hotbarSlot = (hotbarSlot + scrollDelta + HOTBAR_SLOTS) % HOTBAR_SLOTS;
             applyHotbarSelection();
             scrollDelta = 0; // consume event
-        }
-
-        if (scrollDelta != 0) {
-            hotbarSlot = (hotbarSlot + scrollDelta + HOTBAR_SLOTS) % HOTBAR_SLOTS;
-            applyHotbarSelection();
         }
     }
 
@@ -772,11 +792,16 @@ public class Main extends ApplicationAdapter {
                 placeableTile = true;
                 break;
             }
+            case WorldGrid.TILE_PRESS: {
+                placeableTile = true;
+                break;
+            }
             default: {
+                //noinspection DataFlowIssue
                 placeableTile = false;
                 break;
             }
-        };
+        }
         return placeableTile;
     }
 
@@ -789,6 +814,7 @@ public class Main extends ApplicationAdapter {
         int rotValueForDir = 0;
         switch (d) {
             case EAST: {
+                //noinspection DataFlowIssue
                 rotValueForDir = 0;
                 break;
             }
@@ -804,7 +830,7 @@ public class Main extends ApplicationAdapter {
                 rotValueForDir = 3;
                 break;
             }
-        };
+        }
         return rotValueForDir;
     }
 
@@ -819,6 +845,8 @@ public class Main extends ApplicationAdapter {
         if (b.contains("lr")){ splitterLRTextures.addAll(Arrays.asList(frames)); }
         if (b.contains("fr")){ splitterFRTextures.addAll(Arrays.asList(frames)); }
         if (b.contains("fl")){ splitterFLTextures.addAll(Arrays.asList(frames)); }
+        if (b.contains("press")){ pressTextures.addAll(Arrays.asList(frames)); }
+
 
         TextureRegion[] regs = new TextureRegion[frames.length];
         for (int i = 0; i < frames.length; i++) {
@@ -851,11 +879,12 @@ public class Main extends ApplicationAdapter {
 
                 if (id == WorldGrid.TILE_CONVEYOR){
                     if (tileWorld.getEntity(x, y) instanceof ConveyorEntity) {
-                        ConveyorEntity c = (ConveyorEntity) tileWorld.getEntity(x, y);
+                        @SuppressWarnings("PatternVariableCanBeUsed") ConveyorEntity c = (ConveyorEntity) tileWorld.getEntity(x, y);
 
                         // your world rot = output direction
                         Dir out = Dir.fromRot(outRot);
 
+                        assert c != null;
                         ConveyorEntity.Shape conveyorShape = c.getShape();
                         switch (conveyorShape) {
                             case STRAIGHT: {
@@ -865,7 +894,7 @@ public class Main extends ApplicationAdapter {
                             }
                             case TURN_LEFT: {
                                 // input side relative to output
-                                Dir in = (c.getShape() == ConveyorEntity.Shape.TURN_LEFT) ? out.left() : out.right();
+                                @SuppressWarnings("ConstantValue") Dir in = (c.getShape() == ConveyorEntity.Shape.TURN_LEFT) ? out.left() : out.right();
                                 int inRot = dirToRot(in);
                                 // which way do we turn relative to the IN direction?
                                 // idx 0 = left-turn (CCW), idx 1 = right-turn (CW)
@@ -901,6 +930,7 @@ public class Main extends ApplicationAdapter {
                         batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
                     }
                 }
+
                 switch (id) {
                     case WorldGrid.TILE_CONVEYOR: {
                         break;
@@ -954,6 +984,11 @@ public class Main extends ApplicationAdapter {
                             batch.end();
                             batch.begin();
                         }
+                        break;
+                    }
+                    case WorldGrid.TILE_PRESS: {
+                        TextureRegion frame = pressAnim[outRot].getKeyFrame(0f);
+                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
                         break;
                     }
                 }
@@ -1048,6 +1083,7 @@ public class Main extends ApplicationAdapter {
             Texture tex = oreTex;
             switch (info.item().type) {
                 case ORE: {
+                    //noinspection DataFlowIssue
                     tex = oreTex;
                     break;
                 }
@@ -1082,7 +1118,7 @@ public class Main extends ApplicationAdapter {
                 default: {
                     throw new RuntimeException("Unhandled item type: " + info.item().type);
                 }
-            };
+            }
 
             // Center the 32x32 item on the subcell center
             float x = info.x() - 16f;
