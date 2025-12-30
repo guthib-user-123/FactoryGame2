@@ -127,7 +127,7 @@ public final class CrusherEntity extends TileEntity {
 
     private void tickProcessing(TileWorld world) {
         if (processingItemId == EMPTY) {
-            // If P cell somehow has an item but we aren’t tracking it, start it.
+            // If P cell somehow has an item, but we aren’t tracking it, start it.
             int[] pUV = rotUV(2, 2, rot);
             int pid = occ[pUV[0]][pUV[1]];
             if (pid != EMPTY) tryStartProcessing(world, pid);

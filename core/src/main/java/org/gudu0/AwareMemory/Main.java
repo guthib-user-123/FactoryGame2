@@ -125,6 +125,11 @@ public class Main extends ApplicationAdapter {
     private Texture oreTex;
     private Texture dustTex;
     private Texture ingotTex;
+    private Texture crushedOreTex;
+    private Texture gearTex;
+    private Texture plateTex;
+    private Texture rodTex;
+    private Texture machinePartsTex;
 
 
     // --- METHODS --- \\
@@ -254,9 +259,15 @@ public class Main extends ApplicationAdapter {
         }
         selectedTile = hotbarPages[hotbarPage][hotbarSlot];
 
+        // Item Textures
         oreTex   = new Texture(Gdx.files.internal("item/gold/ore.png"));
         dustTex  = new Texture(Gdx.files.internal("item/gold/dust.png"));
         ingotTex = new Texture(Gdx.files.internal("item/gold/ingot.png"));
+        crushedOreTex = new Texture(Gdx.files.internal("item/crushedOre.png"));
+        gearTex = new Texture(Gdx.files.internal("item/gear.png"));
+        plateTex = new Texture(Gdx.files.internal("item/plate.png"));
+        rodTex = new Texture(Gdx.files.internal("item/rod.png"));
+        machinePartsTex = new Texture(Gdx.files.internal("item/machineParts.png"));
 
         // Hotbar Icons
         {
@@ -335,6 +346,11 @@ public class Main extends ApplicationAdapter {
         oreTex.dispose();
         dustTex.dispose();
         ingotTex.dispose();
+        crushedOreTex.dispose();
+        gearTex.dispose();
+        plateTex.dispose();
+        rodTex.dispose();
+        machinePartsTex.dispose();
         whiteTex.dispose();
 
 
@@ -376,7 +392,6 @@ public class Main extends ApplicationAdapter {
         crusherTextures.clear();
         conveyorTurnTextures.clear();
         mergerSpriteTextures.clear();
-
 
     }
 
@@ -1042,6 +1057,21 @@ public class Main extends ApplicationAdapter {
                 }
                 case INGOT: {
                     tex = ingotTex;
+                }
+                case CRUSHED_ORE: {
+                    tex = crushedOreTex;
+                }
+                case GEAR: {
+                    tex = gearTex;
+                }
+                case PLATE: {
+                    tex = plateTex;
+                }
+                case ROD: {
+                    tex = rodTex;
+                }
+                case MACHINE_PARTS: {
+                    tex = machinePartsTex;
                 }
             };
 

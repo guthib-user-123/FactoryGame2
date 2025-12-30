@@ -72,8 +72,6 @@ public final class SpawnerEntity extends TileEntity {
         }
 
         // 2) Spawn new item into the spawn cell (base rot0: (2,2))
-        // Use FIXED_TICK timing: TileWorld ticks at 60Hz, so just add 1/60 per tick.
-//        timer += (1f / 60f);
         timer += world.fixedDt();
 
         if (timer < interval) return;
