@@ -57,6 +57,7 @@ public class WorldGrid {
         public ItemSave[] items;
         public int nextItemId;
     }
+    @SuppressWarnings("unused")
     public static class TileSave {
         public int cx, cy;
 
@@ -78,6 +79,7 @@ public class WorldGrid {
         rot  = new int[wCells][hCells];
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean inBoundsCell(int cx, int cy) {
         return cx >= 0 && cy >= 0 && cx < wCells && cy < hCells;
     }
