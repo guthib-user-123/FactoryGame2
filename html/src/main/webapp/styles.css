@@ -1,0 +1,19 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: #111;
+  overflow: hidden;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+#loading {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  color: #d9d9d9;
+  font-size: 14px;
+}

@@ -1,0 +1,238 @@
+PS C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>  .\gradlew.bat html:dist
+off4
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if "Windows_NT" == "Windows_NT" setlocal
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set DIRNAME=C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if "C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\" == "" set DIRNAME=.
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set APP_BASE_NAME=gradlew
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set APP_HOME=C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>for %i in ("C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\") do set APP_HOME=%~fi
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set APP_HOME=C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if defined JAVA_HOME goto findJavaFromJavaHome
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set JAVA_EXE=java.exe
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>java.exe -version  1>NUL 2>&1
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if 0 EQU 0 goto execute
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>"java.exe" "-Xmx64m" "-Xms64m"   "-Dorg.gradle.appname=gradlew" -jar "C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\\gradle\wrapper\gradle-wrapper.jar" html:dist
+Compiling module org.gudu0.AwareMemory.GdxDefinition
+   [ERROR] Errors in 'file:/C:/Users/bobha/OneDrive/Desktop/projects/FactoryGame/core/src/main/java/org/gudu0/AwareMemory/Main.java'
+      [ERROR] Line 617: Syntax error on token "->", : expected
+      [ERROR] Line 617: Syntax error on token "->", : expected
+      [ERROR] Line 621: Syntax error on token "->", : expected
+      [ERROR] Line 621: Syntax error on token "->", : expected
+      [ERROR] Line 625: Syntax error on token "->", : expected
+      [ERROR] Line 625: Syntax error on token "->", : expected
+      [ERROR] Line 629: Syntax error on token "->", : expected
+      [ERROR] Line 629: Syntax error on token "->", : expected
+      [ERROR] Line 633: Syntax error on token "->", : expected
+      [ERROR] Line 633: Syntax error on token "->", : expected
+      [ERROR] Line 643: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 643: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 643: This method must return a result of type float
+      [ERROR] Line 644: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 644: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 644: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 644: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 645: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 645: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 645: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 645: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 646: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 646: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 646: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 646: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 647: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 647: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 647: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 647: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 648: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 648: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 648: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 648: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 649: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 649: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 649: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 649: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 650: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 650: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 650: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 650: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 651: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 651: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 651: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 651: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 652: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 652: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 652: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 652: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 655: Syntax error on tokens, SwitchLabels expected instead
+      [ERROR] Line 655: Syntax error on tokens, delete these tokens
+      [ERROR] Line 700: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 700: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 700: This method must return a result of type boolean
+      [ERROR] Line 701: Syntax error on token ",", ( expected
+      [ERROR] Line 701: Syntax error on token ",", ( expected
+      [ERROR] Line 705: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 705: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 706: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 706: Syntax error, insert ")" to complete MethodInvocation
+      [ERROR] Line 707: Syntax error on tokens, SwitchLabels expected instead
+      [ERROR] Line 717: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 717: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 717: This method must return a result of type int
+      [ERROR] Line 718: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 718: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 719: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 719: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 720: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 720: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 721: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 721: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 764: Syntax error on token(s), misplaced construct(s)
+      [ERROR] Line 765: Syntax error on token "->", : expected
+      [ERROR] Line 765: Syntax error on token "->", : expected
+      [ERROR] Line 767: Syntax error on token "c", delete this token
+      [ERROR] Line 776: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 777: Syntax error on token ",", : expected
+      [ERROR] Line 796: Syntax error, insert ";" to complete BlockStatements
+      [ERROR] Line 796: Syntax error, insert "AssignmentOperator Expression" to complete Assignment
+      [ERROR] Line 804: Syntax error on token "->", invalid AssignmentOperator
+      [ERROR] Line 805: Syntax error on tokens, delete these tokens
+      [ERROR] Line 807: Syntax error on token ".", , expected
+      [ERROR] Line 811: Syntax error on token "case", , expected
+      [ERROR] Line 811: Syntax error on token ".", , expected
+      [ERROR] Line 815: Syntax error on token "case", , expected
+      [ERROR] Line 815: Syntax error on token ".", , expected
+      [ERROR] Line 819: Syntax error on token "case", , expected
+      [ERROR] Line 819: Syntax error on token ".", , expected
+      [ERROR] Line 823: Syntax error on token "case", , expected
+      [ERROR] Line 823: Syntax error on token ".", , expected
+      [ERROR] Line 827: Syntax error on token "case", , expected
+      [ERROR] Line 827: Syntax error on token ".", , expected
+      [ERROR] Line 831: Syntax error on token "case", , expected
+      [ERROR] Line 831: Syntax error on token ".", , expected
+      [ERROR] Line 938: Syntax error on token "=", ; expected
+      [ERROR] Line 938: Syntax error on token "=", ; expected
+      [ERROR] Line 939: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 940: Syntax error, insert ":" to complete SwitchLabel
+      [ERROR] Line 941: Syntax error, insert ":" to complete SwitchLabel
+   Tracing compile failure path for type 'org.gudu0.AwareMemory.Main'
+      [ERROR] Errors in 'file:/C:/Users/bobha/OneDrive/Desktop/projects/FactoryGame/core/src/main/java/org/gudu0/AwareMemory/Main.java'
+         [ERROR] Line 645: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 646: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 655: Syntax error on tokens, delete these tokens
+         [ERROR] Line 940: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 815: Syntax error on token ".", , expected
+         [ERROR] Line 650: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 701: Syntax error on token ",", ( expected
+         [ERROR] Line 720: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 827: Syntax error on token ".", , expected
+         [ERROR] Line 617: Syntax error on token "->", : expected
+         [ERROR] Line 651: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 811: Syntax error on token ".", , expected
+         [ERROR] Line 643: Syntax error, insert ";" to complete BlockStatements
+         [ERROR] Line 796: Syntax error, insert ";" to complete BlockStatements
+         [ERROR] Line 648: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 621: Syntax error on token "->", : expected
+         [ERROR] Line 700: Syntax error, insert ";" to complete BlockStatements
+         [ERROR] Line 718: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 625: Syntax error on token "->", : expected
+         [ERROR] Line 652: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 629: Syntax error on token "->", : expected
+         [ERROR] Line 705: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 764: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 652: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 765: Syntax error on token "->", : expected
+         [ERROR] Line 819: Syntax error on token ".", , expected
+         [ERROR] Line 717: This method must return a result of type int
+         [ERROR] Line 827: Syntax error on token "case", , expected
+         [ERROR] Line 643: This method must return a result of type float
+         [ERROR] Line 648: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 650: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 717: Syntax error, insert ";" to complete BlockStatements
+         [ERROR] Line 777: Syntax error on token ",", : expected
+         [ERROR] Line 804: Syntax error on token "->", invalid AssignmentOperator
+         [ERROR] Line 819: Syntax error on token "case", , expected
+         [ERROR] Line 805: Syntax error on tokens, delete these tokens
+         [ERROR] Line 644: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 700: This method must return a result of type boolean
+         [ERROR] Line 815: Syntax error on token "case", , expected
+         [ERROR] Line 823: Syntax error on token "case", , expected
+         [ERROR] Line 655: Syntax error on tokens, SwitchLabels expected instead
+         [ERROR] Line 807: Syntax error on token ".", , expected
+         [ERROR] Line 796: Syntax error, insert "AssignmentOperator Expression" to complete Assignment
+         [ERROR] Line 767: Syntax error on token "c", delete this token
+         [ERROR] Line 811: Syntax error on token "case", , expected
+         [ERROR] Line 831: Syntax error on token ".", , expected
+         [ERROR] Line 706: Syntax error, insert ")" to complete MethodInvocation
+         [ERROR] Line 645: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 646: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 651: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 941: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 719: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 633: Syntax error on token "->", : expected
+         [ERROR] Line 649: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 938: Syntax error on token "=", ; expected
+         [ERROR] Line 647: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 776: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 644: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 707: Syntax error on tokens, SwitchLabels expected instead
+         [ERROR] Line 647: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 649: Syntax error on token(s), misplaced construct(s)
+         [ERROR] Line 831: Syntax error on token "case", , expected
+         [ERROR] Line 721: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 823: Syntax error on token ".", , expected
+         [ERROR] Line 939: Syntax error, insert ":" to complete SwitchLabel
+         [ERROR] Line 706: Syntax error, insert ":" to complete SwitchLabel
+   [ERROR] Hint: Your source appears not to live underneath a subpackage called 'client'; no problem, but you'll need to use the <source> directive in your module to make it accessible
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\html\.
+assets
+Copying resources from assets to war/
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\html\..\assets
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\html\assets
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\html\.
+assets
+Copying resources from assets to war/
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\html\..\assets
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame\html\assets
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':html:compileGwt'.
+> Process 'command 'C:\Program Files\Java\jdk-25\bin\java.exe'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 35s
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if 1 EQU 0 goto mainEnd
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>rem the _cmd.exe /c_ return code!
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>set EXIT_CODE=1
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if 1 EQU 0 set EXIT_CODE=1
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>if not "" == "" exit 1
+
+C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>exit /b 1
+PS C:\Users\bobha\OneDrive\Desktop\projects\FactoryGame>

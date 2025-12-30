@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AwareMemory</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div id="loading">Loading...</div>
+    <script>
+      (function () {
+        function preventContextMenu(e) {
+          e.preventDefault();
+        }
+
+        function requestFullscreenOnCanvas() {
+          var canvas = document.getElementsByTagName("canvas")[0];
+          if (!canvas) return;
+          var request =
+            canvas.requestFullscreen ||
+            canvas.webkitRequestFullscreen ||
+            canvas.mozRequestFullScreen ||
+            canvas.msRequestFullscreen;
+          if (request) request.call(canvas);
+        }
+
+        document.addEventListener("contextmenu", preventContextMenu);
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "F3") {
+            e.preventDefault();
+          }
+        });
+        document.addEventListener("click", function (e) {
+          var canvas = document.getElementsByTagName("canvas")[0];
+          if (canvas && e.target === canvas) {
+            requestFullscreenOnCanvas();
+          }
+        });
+      })();
+    </script>
+    <script type="text/javascript" src="html/html.nocache.js"></script>
+  </body>
+</html>

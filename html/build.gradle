@@ -1,0 +1,53 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "org.wisepersist:gwt-gradle-plugin:1.1.16"
+  }
+}
+
+apply plugin: "gwt"
+apply plugin: "war"
+
+eclipse.project.name = appName + '-html'
+sourceCompatibility = 21
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation project(':core')
+  implementation "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx:$gdxVersion:sources"
+  implementation "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion:sources"
+}
+
+gwt {
+  gwtVersion = "2.10.0"
+  minHeapSize = "1G"
+  maxHeapSize = "1G"
+  src = files(
+    file("src/main/java"),
+    project(":core").file("src/main/java")
+  )
+  modules "org.gudu0.AwareMemory.GdxDefinition"
+}
+
+sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
+
+def gwtOutDir = file("$buildDir/gwt/out")
+
+tasks.register("copyWebapp", Copy) {
+  dependsOn("compileGwt")
+  from("src/main/webapp")
+  into(gwtOutDir)
+  from(file("war/assets")) {
+    into("assets")
+  }
+}
+
+tasks.register("dist") {
+  dependsOn("compileGwt", "copyWebapp")
+}
