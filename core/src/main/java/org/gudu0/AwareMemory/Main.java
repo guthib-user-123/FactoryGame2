@@ -16,6 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
 
 import java.util.ArrayList;
@@ -75,6 +76,15 @@ public class Main extends ApplicationAdapter {
     private int hotbarSlot = 0; // 0..9
     private int scrollDelta = 0;
 
+    private static final int MAX_TILE_ID = 256;
+
+    // simple registries (indexed by tile id)
+    private final float[] costByTile = new float[MAX_TILE_ID];
+    private final boolean[] placeableByTile = new boolean[MAX_TILE_ID];
+
+    // [tileId][rot] -> animation (null means “no generic animation draw”)
+    @SuppressWarnings("unchecked")
+    private final Animation<TextureRegion>[][] animByTileRot = new Animation[MAX_TILE_ID][4];
 
 
     private static final float REFUND_RATE = 0.75f;
@@ -181,50 +191,50 @@ public class Main extends ApplicationAdapter {
         // Machine Animations and Sprites
         {
             // 32 frames: 0.05f = ~20fps, 0.10f = 10fps
-            conveyorAnim[0] = makeAnim("Conveyor/right/conveyor_right", 32, false);  //right
-            conveyorAnim[1] = makeAnim("Conveyor/down/conveyor_down", 32, false);        //down
-            conveyorAnim[2] = makeAnim("Conveyor/left/conveyor_left", 32, true);     //left
-            conveyorAnim[3] = makeAnim("Conveyor/up/conveyor_up", 32, false);    //up
+            conveyorAnim[0] = makeAnim("Conveyor/right/conveyor_right", 32, false, conveyorTextures);  //right
+            conveyorAnim[1] = makeAnim("Conveyor/down/conveyor_down", 32, false, conveyorTextures);        //down
+            conveyorAnim[2] = makeAnim("Conveyor/left/conveyor_left", 32, true, conveyorTextures);     //left
+            conveyorAnim[3] = makeAnim("Conveyor/up/conveyor_up", 32, false, conveyorTextures);    //up
 
-            smelterAnim[0] = makeAnim("smelter/right/smelter_right", 2, false);
-            smelterAnim[1] = makeAnim("smelter/down/smelter_down", 2, false);
-            smelterAnim[2] = makeAnim("smelter/left/smelter_left", 2, false);
-            smelterAnim[3] = makeAnim("smelter/up/smelter_up", 2, false);
+            smelterAnim[0] = makeAnim("smelter/right/smelter_right", 2, false, smelterTextures);
+            smelterAnim[1] = makeAnim("smelter/down/smelter_down", 2, false, smelterTextures);
+            smelterAnim[2] = makeAnim("smelter/left/smelter_left", 2, false, smelterTextures);
+            smelterAnim[3] = makeAnim("smelter/up/smelter_up", 2, false, smelterTextures);
 
-            sellPadAnim[0] = makeAnim("seller/sellpad", 1, false);
-            sellPadAnim[1] = makeAnim("seller/sellpad", 1, false);
-            sellPadAnim[2] = makeAnim("seller/sellpad", 1, false);
-            sellPadAnim[3] = makeAnim("seller/sellpad", 1, false);
+            sellPadAnim[0] = makeAnim("seller/sellpad", 1, false, sellPadTextures);
+            sellPadAnim[1] = makeAnim("seller/sellpad", 1, false, sellPadTextures);
+            sellPadAnim[2] = makeAnim("seller/sellpad", 1, false, sellPadTextures);
+            sellPadAnim[3] = makeAnim("seller/sellpad", 1, false, sellPadTextures);
 
-            spawnerAnim[0] = makeAnim("spawner/right/spawner_right", 1, false);
-            spawnerAnim[1] = makeAnim("spawner/down/spawner_down", 1, false);
-            spawnerAnim[2] = makeAnim("spawner/left/spawner_left", 1, false);
-            spawnerAnim[3] = makeAnim("spawner/up/spawner_up", 1, false);
+            spawnerAnim[0] = makeAnim("spawner/right/spawner_right", 1, false, spawnerTextures);
+            spawnerAnim[1] = makeAnim("spawner/down/spawner_down", 1, false, spawnerTextures);
+            spawnerAnim[2] = makeAnim("spawner/left/spawner_left", 1, false, spawnerTextures);
+            spawnerAnim[3] = makeAnim("spawner/up/spawner_up", 1, false, spawnerTextures);
 
-            crusherAnim[0] = makeAnim("crusher/right/crusher_right", 1, false);
-            crusherAnim[1] = makeAnim("crusher/down/crusher_down", 1, false);
-            crusherAnim[2] = makeAnim("crusher/left/crusher_left", 1, false);
-            crusherAnim[3] = makeAnim("crusher/up/crusher_up", 1, false);
+            crusherAnim[0] = makeAnim("crusher/right/crusher_right", 1, false, crusherTextures);
+            crusherAnim[1] = makeAnim("crusher/down/crusher_down", 1, false, crusherTextures);
+            crusherAnim[2] = makeAnim("crusher/left/crusher_left", 1, false, crusherTextures);
+            crusherAnim[3] = makeAnim("crusher/up/crusher_up", 1, false, crusherTextures);
 
-            splitterLRAnim[0] = makeAnim("splitterLR/right/splitter_LR_right", 1, false);
-            splitterLRAnim[1] = makeAnim("splitterLR/down/splitter_LR_down", 1, false);
-            splitterLRAnim[2] = makeAnim("splitterLR/left/splitter_LR_left", 1, false);
-            splitterLRAnim[3] = makeAnim("splitterLR/up/splitter_LR_up", 1, false);
+            splitterLRAnim[0] = makeAnim("splitterLR/right/splitter_LR_right", 1, false, splitterLRTextures);
+            splitterLRAnim[1] = makeAnim("splitterLR/down/splitter_LR_down", 1, false, splitterLRTextures);
+            splitterLRAnim[2] = makeAnim("splitterLR/left/splitter_LR_left", 1, false, splitterLRTextures);
+            splitterLRAnim[3] = makeAnim("splitterLR/up/splitter_LR_up", 1, false, splitterLRTextures);
 
-            splitterFRAnim[0] = makeAnim("splitterFR/right/splitter_FR_right", 1, false);
-            splitterFRAnim[1] = makeAnim("splitterFR/down/splitter_FR_down", 1, false);
-            splitterFRAnim[2] = makeAnim("splitterFR/left/splitter_FR_left", 1, false);
-            splitterFRAnim[3] = makeAnim("splitterFR/up/splitter_FR_up", 1, false);
+            splitterFRAnim[0] = makeAnim("splitterFR/right/splitter_FR_right", 1, false, splitterFRTextures);
+            splitterFRAnim[1] = makeAnim("splitterFR/down/splitter_FR_down", 1, false, splitterFRTextures);
+            splitterFRAnim[2] = makeAnim("splitterFR/left/splitter_FR_left", 1, false, splitterFRTextures);
+            splitterFRAnim[3] = makeAnim("splitterFR/up/splitter_FR_up", 1, false, splitterFRTextures);
 
-            splitterFLAnim[0] = makeAnim("splitterFL/right/splitter_FL_right", 1, false);
-            splitterFLAnim[1] = makeAnim("splitterFL/down/splitter_FL_down", 1, false);
-            splitterFLAnim[2] = makeAnim("splitterFL/left/splitter_FL_left", 1, false);
-            splitterFLAnim[3] = makeAnim("splitterFL/up/splitter_FL_up", 1, false);
+            splitterFLAnim[0] = makeAnim("splitterFL/right/splitter_FL_right", 1, false, splitterFLTextures);
+            splitterFLAnim[1] = makeAnim("splitterFL/down/splitter_FL_down", 1, false, splitterFLTextures);
+            splitterFLAnim[2] = makeAnim("splitterFL/left/splitter_FL_left", 1, false, splitterFLTextures);
+            splitterFLAnim[3] = makeAnim("splitterFL/up/splitter_FL_up", 1, false, splitterFLTextures);
 
-            pressAnim[0] = makeAnim("press/press", 1, false);
-            pressAnim[1] = makeAnim("press/press", 1, false);
-            pressAnim[2] = makeAnim("press/press", 1, false);
-            pressAnim[3] = makeAnim("press/press", 1, false);
+            pressAnim[0] = makeAnim("press/press", 1, false, pressTextures);
+            pressAnim[1] = makeAnim("press/press", 1, false, pressTextures);
+            pressAnim[2] = makeAnim("press/press", 1, false, pressTextures);
+            pressAnim[3] = makeAnim("press/press", 1, false, pressTextures);
 
             // outRot: 0=E,1=S,2=W,3=N
             // Output NORTH (rot 3)
@@ -278,39 +288,27 @@ public class Main extends ApplicationAdapter {
 
         // Hotbar Icons
         {
-            int maxId = getMaxId();
+            iconByTileId = new TextureRegion[MAX_TILE_ID];
 
-            iconByTileId = new TextureRegion[maxId + 1];
+            // Register all tiles (this also sets their default icon from anim rot=0)
+            registerTile(WorldGrid.TILE_CONVEYOR, COST_CONVEYOR, true, conveyorAnim, true);
+            registerTile(WorldGrid.TILE_SMELTER,  COST_SMELTER,  true, smelterAnim,  false);
+            registerTile(WorldGrid.TILE_CRUSHER,  COST_CRUSHER,  true, crusherAnim,  false);
+            registerTile(WorldGrid.TILE_SPAWNER,  COST_SPAWNER,  true, spawnerAnim,  false);
+            registerTile(WorldGrid.TILE_SELLPAD,  COST_SELLPAD,  true, sellPadAnim,  false);
+            registerTile(WorldGrid.TILE_PRESS,    COST_PRESS,    true, pressAnim,    false);
 
-            // Pick representative frames.
-            // Use rot=0 and time=0 for animations.
-            iconByTileId[WorldGrid.TILE_CONVEYOR] = conveyorAnim[0].getKeyFrame(0f, true);
-            iconByTileId[WorldGrid.TILE_SMELTER] = smelterAnim[0].getKeyFrame(0f, true);
-            iconByTileId[WorldGrid.TILE_CRUSHER] = crusherAnim[0].getKeyFrame(0f, true);
-            iconByTileId[WorldGrid.TILE_SPAWNER] = spawnerAnim[0].getKeyFrame(0f, true);
-            iconByTileId[WorldGrid.TILE_SELLPAD] = sellPadAnim[0].getKeyFrame(0f, false); // if this is a TextureRegion already; otherwise new TextureRegion(sellpadTex)
+            // not manually placeable (auto-upgrade)
+            registerTile(WorldGrid.TILE_SPLITTER_FL, COST_SPLIT_FL, false, splitterFLAnim, false);
+            registerTile(WorldGrid.TILE_SPLITTER_FR, COST_SPLIT_FR, false, splitterFRAnim, false);
+            registerTile(WorldGrid.TILE_SPLITTER_LR, COST_SPLIT_LR, false, splitterLRAnim, false);
+
+            // merger uses special sprite, so just set icon directly (and cost/placeable)
+            costByTile[WorldGrid.TILE_MERGER] = COST_MERGER;
+            placeableByTile[WorldGrid.TILE_MERGER] = false;
             iconByTileId[WorldGrid.TILE_MERGER] = mergerSprite[0][0];
-            iconByTileId[WorldGrid.TILE_SPLITTER_FL] = splitterFLAnim[0].getKeyFrame(0f, false); // whatever your arrays are
-            iconByTileId[WorldGrid.TILE_SPLITTER_FR] = splitterFRAnim[0].getKeyFrame(0f, false);
-            iconByTileId[WorldGrid.TILE_SPLITTER_LR] = splitterLRAnim[0].getKeyFrame(0f, false);
-            iconByTileId[WorldGrid.TILE_PRESS] = pressAnim[0].getKeyFrame(0f, false);
-        }
-    }
 
-    @SuppressWarnings("DataFlowIssue")
-    private int getMaxId() {
-        int maxId = 0;
-        maxId = Math.max(maxId, WorldGrid.TILE_CONVEYOR);
-        maxId = Math.max(maxId, WorldGrid.TILE_SMELTER);
-        maxId = Math.max(maxId, WorldGrid.TILE_SELLPAD);
-        maxId = Math.max(maxId, WorldGrid.TILE_SPAWNER);
-        maxId = Math.max(maxId, WorldGrid.TILE_CRUSHER);
-        maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_FL);
-        maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_FR);
-        maxId = Math.max(maxId, WorldGrid.TILE_SPLITTER_LR);
-        maxId = Math.max(maxId, WorldGrid.TILE_MERGER);
-        maxId = Math.max(maxId, WorldGrid.TILE_PRESS);
-        return maxId;
+        }
     }
 
     @Override
@@ -644,94 +642,26 @@ public class Main extends ApplicationAdapter {
         if (ok) batch.setColor(0.4f, 1f, 0.4f, 0.55f);
         else    batch.setColor(1f, 0.3f, 0.3f, 0.55f);
 
-        switch (selectedTile){
-            case WorldGrid.TILE_CONVEYOR: {
-                TextureRegion frame = conveyorAnim[selectedRot].getKeyFrame(stateTime, true);
+        // conveyor preview: animated
+        if (selectedTile == WorldGrid.TILE_CONVEYOR) {
+            TextureRegion frame = conveyorAnim[selectedRot].getKeyFrame(stateTime, true);
+            batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
+        } else {
+            Animation<TextureRegion> a = animByTileRot[selectedTile][selectedRot];
+            if (a != null) {
+                TextureRegion frame = a.getKeyFrame(0f, false); // idle preview
                 batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
-                break;
-            }
-            case WorldGrid.TILE_SMELTER: {
-                TextureRegion frame = smelterAnim[selectedRot].getKeyFrame(stateTime, false);
-                batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
-                break;
-            }
-            case WorldGrid.TILE_SELLPAD: {
-                TextureRegion frame = sellPadAnim[selectedRot].getKeyFrame(stateTime, false);
-                batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
-                break;
-            }
-            case WorldGrid.TILE_SPAWNER: {
-                TextureRegion frame = spawnerAnim[selectedRot].getKeyFrame(0f);
-                batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
-                break;
-
-            }
-            case WorldGrid.TILE_CRUSHER: {
-                TextureRegion frame = crusherAnim[selectedRot].getKeyFrame(0f);
-                batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
-                break;
-            }
-            case WorldGrid.TILE_PRESS: {
-                TextureRegion frame = pressAnim[selectedRot].getKeyFrame(0f);
-                batch.draw(frame, x, y, WorldGrid.CELL, WorldGrid.CELL);
-                break;
             }
         }
 
         batch.setColor(1f, 1f, 1f, 1f);
         batch.end();
     }
-    @SuppressWarnings("UnusedAssignment")
     private float getTileCost(int tile) {
-        float costToPlace = 0f;
-        switch (tile) {
-            case WorldGrid.TILE_CONVEYOR: {
-                costToPlace = COST_CONVEYOR;
-                break;
-            }
-            case WorldGrid.TILE_SMELTER : {
-                costToPlace = COST_SMELTER;
-                break;
-            }
-            case WorldGrid.TILE_SELLPAD : {
-                costToPlace = COST_SELLPAD;
-                break;
-            }
-            case WorldGrid.TILE_SPAWNER : {
-                costToPlace = COST_SPAWNER;
-                break;
-            }
-            case WorldGrid.TILE_CRUSHER: {
-                costToPlace = COST_CRUSHER;
-                break;
-            }
-            case WorldGrid.TILE_SPLITTER_FL: {
-                costToPlace = COST_SPLIT_FL;
-                break;
-            }
-            case WorldGrid.TILE_SPLITTER_FR: {
-                costToPlace = COST_SPLIT_FR;
-                break;
-            }
-            case WorldGrid.TILE_SPLITTER_LR: {
-                costToPlace = COST_SPLIT_LR;
-                break;
-            }
-            case WorldGrid.TILE_MERGER: {
-                costToPlace = COST_MERGER;
-                break;
-            }
-            case WorldGrid.TILE_PRESS: {
-                costToPlace = COST_PRESS;
-                break;
-            }
-            default: {
-               costToPlace = 0f;
-                break;
-            }
-        }
-        return costToPlace;
+        if (tile < 0 || tile >= MAX_TILE_ID) return 0f;
+        return costByTile[tile];
     }
+
     public void doSelectionInput() {
         // number keys -> slot
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) selectSlot(0);
@@ -768,41 +698,8 @@ public class Main extends ApplicationAdapter {
         applyHotbarSelection();
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     private boolean isManuallyPlaceable(int tile) {
-        boolean placeableTile = false;
-        switch (tile) {
-            case WorldGrid.TILE_CONVEYOR: {
-                placeableTile = true;
-                break;
-            }
-            case WorldGrid.TILE_SMELTER: {
-                placeableTile = true;
-                break;
-            }
-            case WorldGrid.TILE_SELLPAD: {
-                placeableTile = true;
-                break;
-            }
-            case WorldGrid.TILE_SPAWNER: {
-                placeableTile = true;
-                break;
-            }
-            case WorldGrid.TILE_CRUSHER: {
-                placeableTile = true;
-                break;
-            }
-            case WorldGrid.TILE_PRESS: {
-                placeableTile = true;
-                break;
-            }
-            default: {
-                //noinspection DataFlowIssue
-                placeableTile = false;
-                break;
-            }
-        }
-        return placeableTile;
+        return tile >= 0 && tile < MAX_TILE_ID && placeableByTile[tile];
     }
 
     private void applyHotbarSelection() {
@@ -834,18 +731,26 @@ public class Main extends ApplicationAdapter {
         return rotValueForDir;
     }
 
-    private Animation<TextureRegion> makeAnim(String base, int last, boolean reverseFrames) {
+    private void registerTile(int tileId, float cost, boolean placeable, Animation<TextureRegion>[] anim4, boolean iconLoop) {
+        if (tileId < 0 || tileId >= MAX_TILE_ID) {
+            throw new RuntimeException("tileId out of range: " + tileId);
+        }
+        costByTile[tileId] = cost;
+        placeableByTile[tileId] = placeable;
+
+        if (anim4 != null) {
+            System.arraycopy(anim4, 0, animByTileRot[tileId], 0, 4);
+
+            // default icon: rot 0, t=0
+            if (iconByTileId[tileId] == null && anim4[0] != null) {
+                iconByTileId[tileId] = anim4[0].getKeyFrame(0f, iconLoop);
+            }
+        }
+    }
+
+    private Animation<TextureRegion> makeAnim(String base, int last, boolean reverseFrames, ArrayList<Texture> bucket) {
         Texture[] frames = loadFrames(base, last);
-        String b = base.toLowerCase();
-        if (b.contains("conveyor")){ conveyorTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("smelter")){ smelterTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("sellpad")){ sellPadTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("spawner")){ spawnerTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("crusher")){ crusherTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("lr")){ splitterLRTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("fr")){ splitterFRTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("fl")){ splitterFLTextures.addAll(Arrays.asList(frames)); }
-        if (b.contains("press")){ pressTextures.addAll(Arrays.asList(frames)); }
+        bucket.addAll(Arrays.asList(frames));
 
 
         TextureRegion[] regs = new TextureRegion[frames.length];
@@ -929,67 +834,25 @@ public class Main extends ApplicationAdapter {
                         TextureRegion frame = conveyorAnim[outRot].getKeyFrame(stateTime, true);
                         batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
                     }
-                }
+                } else if (id == WorldGrid.TILE_MERGER) {
+                    int variant = mergerVariantAt(x, y, outRot);
 
-                switch (id) {
-                    case WorldGrid.TILE_CONVEYOR: {
-                        break;
-                    }
-                    case WorldGrid.TILE_SMELTER: {
-                        batch.draw(smelterAnim[outRot].getKeyFrame(0f), drawX, drawY, WorldGrid.CELL, WorldGrid.CELL); // idle frame
-                        break;
-                    }
-                    case WorldGrid.TILE_SELLPAD: {
-                        TextureRegion frame = sellPadAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
-                    }
-                    case WorldGrid.TILE_SPAWNER: {
-                        TextureRegion frame = spawnerAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
-                    }
-                    case WorldGrid.TILE_CRUSHER: {
-                        TextureRegion frame = crusherAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
-                    }
-                    case WorldGrid.TILE_SPLITTER_LR: {
-                        TextureRegion frame = splitterLRAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
-                    }
-                    case WorldGrid.TILE_SPLITTER_FL: {
-                        TextureRegion frame = splitterFLAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
-                    }
-                    case WorldGrid.TILE_SPLITTER_FR: {
-                        TextureRegion frame = splitterFRAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
-                    }
-                    case WorldGrid.TILE_MERGER: {
-                        int variant = mergerVariantAt(x, y, outRot);
+                    batch.draw(mergerSprite[outRot][variant], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
+                    if (debugOverlay) {
+                        batch.end();
 
-                        batch.draw(mergerSprite[outRot][variant], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        if (debugOverlay) {
-                            batch.end();
+                        batch.setProjectionMatrix(camera.combined);
+                        batch.begin();
 
-                            batch.setProjectionMatrix(camera.combined);
-                            batch.begin();
+                        hud.drawMergervariant(batch, variant, drawX, drawY);
 
-                            hud.drawMergervariant(batch, variant, drawX, drawY);
-
-                            batch.end();
-                            batch.begin();
-                        }
-                        break;
+                        batch.end();
+                        batch.begin();
                     }
-                    case WorldGrid.TILE_PRESS: {
-                        TextureRegion frame = pressAnim[outRot].getKeyFrame(0f);
-                        batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
-                        break;
+                } else {
+                    Animation<TextureRegion> a = animByTileRot[id][outRot];
+                    if (a != null) {
+                        batch.draw(a.getKeyFrame(0f, false), drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
                     }
                 }
             }
@@ -1158,8 +1021,4 @@ public class Main extends ApplicationAdapter {
         }
         return out;
     }
-
-
-
-
 }
