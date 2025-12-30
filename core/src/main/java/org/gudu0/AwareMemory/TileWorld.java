@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings({"EnhancedSwitchMigration", "PatternVariableCanBeUsed"})
 public final class TileWorld {
     private static final float FIXED_TICK = 1f / 60f;
 
@@ -49,93 +50,44 @@ public final class TileWorld {
         return it;
     }
 
-    public ArrayList<WorldGrid.ItemSave> exportItemSaves() {
-        ArrayList<WorldGrid.ItemSave> out = new ArrayList<>();
+    public WorldGrid.TileSave[] exportTileSaves() {
+        ArrayList<WorldGrid.TileSave> out = new ArrayList<>();
 
         for (int y = 0; y < world.hCells; y++) {
             for (int x = 0; x < world.wCells; x++) {
                 TileEntity te = entities[x][y];
                 if (te == null) continue;
 
-                for (int u = 0; u < TileEntity.N; u++) {
-                    for (int v = 0; v < TileEntity.N; v++) {
-                        int id = te.occ[u][v];
-                        if (id == TileEntity.EMPTY) continue;
+                WorldGrid.TileSave ts = new WorldGrid.TileSave();
+                ts.cx = x;
+                ts.cy = y;
 
-                        Item it = items.get(id);
-                        if (it == null) continue;
-
-                        WorldGrid.ItemSave s = new WorldGrid.ItemSave();
-                        s.id = it.id;
-                        s.type = it.type.name(); // stable across enum reorder
-                        s.value = it.value;
-
-                        s.cx = x;
-                        s.cy = y;
-                        s.u = u;
-                        s.v = v;
-
-                        out.add(s);
-                    }
-                }
+                te.writeSaveData(ts);
+                out.add(ts);
             }
         }
-
-        return out;
+        return out.toArray(new WorldGrid.TileSave[0]);
     }
 
-    public void importItemSaves(WorldGrid.ItemSave[] itemsFromSave, int nextIdFromSave) {
-        // Clear current runtime items
-        items.clear();
 
-        // Reset tick state (optional but usually desired on load)
-        acc = 0f;
-        tick = 0;
+    public void importTileSaves(WorldGrid.TileSave[] saves) {
+        if (saves == null) return;
 
-        int maxId = 0;
+        for (WorldGrid.TileSave ts : saves) {
+            if (!world.inBoundsCell(ts.cx, ts.cy)) continue;
 
-        if (itemsFromSave != null) {
-            for (WorldGrid.ItemSave s : itemsFromSave) {
-                if (s == null) continue;
-
-                // Validate coordinates
-                if (!world.inBoundsCell(s.cx, s.cy)) continue;
-                if (s.u < 0 || s.u >= TileEntity.N || s.v < 0 || s.v >= TileEntity.N) continue;
-
-                TileEntity te = entities[s.cx][s.cy];
-                if (te == null) continue; // entities must be rebuilt before this call
-
-                // Don’t overwrite existing occupancy
-                if (te.occ[s.u][s.v] != TileEntity.EMPTY) continue;
-
-                ItemType type;
-                try {
-                    type = ItemType.valueOf(s.type);
-                } catch (Exception e) {
-                    // Unknown type in save -> skip safely
-                    continue;
-                }
-
-                Item it = new Item(s.id, type, s.value);
-                items.put(it.id, it);
-                te.occ[s.u][s.v] = it.id;
-
-                if (it.id > maxId) maxId = it.id;
+            TileEntity te = entities[ts.cx][ts.cy];
+            if (te != null) {
+                te.readSaveData(ts);
             }
         }
-
-        // Restore nextItemId safely
-        int candidate = nextIdFromSave;
-        if (candidate <= 0) candidate = maxId + 1;
-        if (candidate <= maxId) candidate = maxId + 1;
-        nextItemId = candidate;
     }
+
 
     public int exportNextItemId() { return nextItemId; }
 
 
     private void refreshSplitterVariantAt(int cx, int cy) {
-        TileEntity te = getEntity(cx, cy);
         if (!(getEntity(cx, cy) instanceof SplitterEntity)) return;
         SplitterEntity s = (SplitterEntity) getEntity(cx, cy);
 
@@ -404,6 +356,7 @@ public final class TileWorld {
         return WorldGrid.TILE_CONVEYOR;
     }
 
+    @SuppressWarnings("ClassCanBeRecord")
     public static final class ItemRenderInfo {
         private final Item item;
         private final float x;
@@ -419,4 +372,6 @@ public final class TileWorld {
         public float x() { return x; }
         public float y() { return y; }
     }
+
+
 }

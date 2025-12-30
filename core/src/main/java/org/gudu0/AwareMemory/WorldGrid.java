@@ -47,16 +47,24 @@ public class WorldGrid {
     }
 
 
-    private static class SaveData {
-        int version = 2; // new
-        int w, h;
-        int[] tiles;
-        int[] rots;
+    public static class SaveData {
+        public int w, h;
+        public int[] tiles;
+        public int[] rots;
 
-        // Optional (new). Old saves won't have these -> null.
-        int nextItemId;
-        ItemSave[] items;
+        public TileSave[] tileSaves;
+        public ItemSave[] items;
+        public int nextItemId;
     }
+    public static class TileSave {
+        public int cx, cy;
+
+        // machine-specific fields (sparse; only some used per tile)
+        public float f0, f1;
+        public int i0, i1;
+        public boolean b0;
+    }
+
 
 
     public WorldGrid() {
@@ -90,7 +98,7 @@ public class WorldGrid {
 
         // New (v2): items + next id
         s.nextItemId = tileWorld.exportNextItemId();
-        ArrayList<ItemSave> list = tileWorld.exportItemSaves();
+        s.tileSaves = tileWorld.exportTileSaves();
         s.items = list.toArray(new ItemSave[0]);
 
         Json json = new Json();
@@ -124,50 +132,11 @@ public class WorldGrid {
     }
 
     public void applyLoadedItemsTo(TileWorld tileWorld) {
-        tileWorld.importItemSaves(pendingItems, pendingNextItemId);
+        tileWorld.importTileSaves(pendingTileSaves);
+
+
         pendingItems = null;
         pendingNextItemId = 0;
     }
 
-
-    public void save(String name) {
-        SaveData s = new SaveData();
-        s.w = wCells;
-        s.h = hCells;
-        s.tiles = new int[s.w * s.h];
-        s.rots  = new int[s.w * s.h];
-
-        for (int y = 0; y < s.h; y++) {
-            for (int x = 0; x < s.w; x++) {
-                int i = x + y * s.w;
-                s.tiles[i] = grid[x][y];
-                s.rots[i]  = rot[x][y];
-            }
-        }
-
-        Json json = new Json();
-        FileHandle fh = Gdx.files.local(name);
-        fh.writeString(json.prettyPrint(s), false);
-    }
-
-    public void load(String name) {
-        FileHandle fh = Gdx.files.local(name);
-        if (!fh.exists()) return;
-
-        Json json = new Json();
-        SaveData s = json.fromJson(SaveData.class, fh);
-
-        if (s.w != wCells || s.h != hCells) {
-            throw new RuntimeException("Save dimensions mismatch. Save=" + s.w + "x" + s.h +
-                " Current=" + wCells + "x" + hCells);
-        }
-
-        for (int y = 0; y < s.h; y++) {
-            for (int x = 0; x < s.w; x++) {
-                int i = x + y * s.w;
-                grid[x][y] = s.tiles[i];
-                rot[x][y] = s.rots[i];
-            }
-        }
-    }
 }

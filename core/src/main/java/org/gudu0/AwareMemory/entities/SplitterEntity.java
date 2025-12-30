@@ -299,4 +299,15 @@ public final class SplitterEntity extends TileEntity {
         };
         return returnedCell2;
     }
+
+    @Override
+    public void writeSaveData(WorldGrid.TileSave out) {
+        out.b0 = toggle;
+    }
+
+    @Override
+    public void readSaveData(WorldGrid.TileSave in) {
+        toggle = in.b0;
+    }
+
 }

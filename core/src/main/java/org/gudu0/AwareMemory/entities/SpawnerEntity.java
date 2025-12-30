@@ -93,4 +93,13 @@ public final class SpawnerEntity extends TileEntity {
 
         timer = 0f;
     }
+    @Override
+    public void writeSaveData(WorldGrid.TileSave out) {
+        out.f0 = timer;
+    }
+    @Override
+    public void readSaveData(WorldGrid.TileSave in) {
+        timer = in.f0;
+    }
+
 }

@@ -133,4 +133,15 @@ public final class MergerEntity extends TileEntity {
         occ[fu][fv] = EMPTY;
         return true;
     }
+
+    @Override
+    public void writeSaveData(WorldGrid.TileSave out) {
+        out.i0 = rr;
+    }
+
+    @Override
+    public void readSaveData(WorldGrid.TileSave in) {
+        rr = in.i0;
+    }
+
 }

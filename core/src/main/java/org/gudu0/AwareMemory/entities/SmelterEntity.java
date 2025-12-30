@@ -133,4 +133,19 @@ public final class SmelterEntity extends TileEntity {
         }
         done = true;
     }
+
+    @Override
+    public void writeSaveData(WorldGrid.TileSave out) {
+        out.f0 = remaining;
+        out.i0 = processingItemId;
+        out.b0 = done;
+    }
+
+    @Override
+    public void readSaveData(WorldGrid.TileSave in) {
+        remaining = in.f0;
+        processingItemId = in.i0;
+        done = in.b0;
+    }
+
 }

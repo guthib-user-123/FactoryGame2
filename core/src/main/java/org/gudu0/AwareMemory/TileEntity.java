@@ -81,4 +81,15 @@ public abstract class TileEntity {
                 return new int[]{N - 1 - v, u};
         }
     }
+
+    // Called during save
+    public void writeSaveData(WorldGrid.TileSave out) {
+        // default: nothing
+    }
+
+    // Called after entity is created on load
+    public void readSaveData(WorldGrid.TileSave in) {
+        // default: nothing
+    }
+
 }
