@@ -107,7 +107,7 @@ public class Main extends ApplicationAdapter {
     @SuppressWarnings("unchecked")
     private final Animation<TextureRegion>[] splitterFLAnim = new Animation[4];
     private final ArrayList<Texture> splitterFLTextures = new ArrayList<>();
-    @SuppressWarnings("unchecked")
+
     private TextureRegion[][] mergerSprite = new TextureRegion[4][3]; // [outRot][variant]
     private final ArrayList<Texture> mergerSpriteTextures = new ArrayList<>();
 
@@ -133,7 +133,7 @@ public class Main extends ApplicationAdapter {
 
 
     // --- METHODS --- \\
-    @SuppressWarnings("SpellCheckingInspection")
+    @SuppressWarnings({"SpellCheckingInspection", "DataFlowIssue"})
     @Override
     public void create() {
         world = new WorldGrid();
@@ -1057,21 +1057,30 @@ public class Main extends ApplicationAdapter {
                 }
                 case INGOT: {
                     tex = ingotTex;
+                    break;
                 }
                 case CRUSHED_ORE: {
                     tex = crushedOreTex;
+                    break;
                 }
                 case GEAR: {
                     tex = gearTex;
+                    break;
                 }
                 case PLATE: {
                     tex = plateTex;
+                    break;
                 }
                 case ROD: {
                     tex = rodTex;
+                    break;
                 }
                 case MACHINE_PARTS: {
                     tex = machinePartsTex;
+                    break;
+                }
+                default: {
+                    throw new RuntimeException("Unhandled item type: " + info.item().type);
                 }
             };
 

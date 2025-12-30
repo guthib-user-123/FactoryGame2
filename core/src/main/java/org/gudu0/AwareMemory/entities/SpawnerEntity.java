@@ -10,7 +10,7 @@ public final class SpawnerEntity extends TileEntity {
     // Spawner timing
     private float timer = 0f;
     public float interval = 0.75f;  // tune
-    public ItemType spawnType = ItemType.ORE;
+    public ItemType spawnType = ItemType.GEAR;
     public float spawnValue = 1f;
 
     public SpawnerEntity(int cellX, int cellY, int rot) {
@@ -86,6 +86,7 @@ public final class SpawnerEntity extends TileEntity {
         }
 
         Item it = world.createItem(spawnType, spawnValue);
+        spawnType = spawnType.getNext();
         occ[su][sv] = it.id;
         it.markEntered(currentTick);
 

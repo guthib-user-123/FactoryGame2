@@ -8,5 +8,12 @@ public enum ItemType {
     GEAR,
     PLATE,
     ROD,
-    MACHINE_PARTS
+    MACHINE_PARTS;
+
+    private static final ItemType[] VALUES = values();
+    private static final int SIZE = VALUES.length;
+
+    public ItemType getNext(){
+        return VALUES[(this.ordinal() + 1) % SIZE];
+    }
 }
