@@ -111,7 +111,7 @@ public final class TileWorld {
                     for (int v = 0; v < TileEntity.N; v++) {
                         te.occ[u][v] = TileEntity.EMPTY;
                     }
-                }   
+                }
             }
         }
 
@@ -228,6 +228,9 @@ public final class TileWorld {
                 break;
             case WorldGrid.TILE_MERGER:
                 created = new MergerEntity(cx, cy, rot);
+                break;
+            case WorldGrid.TILE_PRESS:
+                created = new PressEntity(cx, cy, rot);
                 break;
             default:
                 created = null;
