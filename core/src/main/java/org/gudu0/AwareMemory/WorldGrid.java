@@ -21,6 +21,9 @@ public class WorldGrid {
     public static final int TILE_MERGER = 7;
     public static final int TILE_PRESS = 8;
     public static final int TILE_ROLLER = 9;
+    public static final int TILE_FILTER_LR = 10;
+    public static final int TILE_FILTER_FR = 11;
+    public static final int TILE_FILTER_FL = 12;
 
     public final float WORLD_W;
     public final float WORLD_H;
