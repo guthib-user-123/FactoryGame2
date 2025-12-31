@@ -41,7 +41,7 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera camera;
     private Viewport viewport;
     private SpriteBatch batch;
-    private float money = 1000000.0f;
+    private float money = 100.0f;
 
     @SuppressWarnings("FieldCanBeLocal")
     private OrthographicCamera hudCamera;
@@ -441,7 +441,6 @@ public class Main extends ApplicationAdapter {
         hudViewport.update(width, height, true);   // HUD
     }
 
-
     @Override
     public void dispose() {
         shapes.dispose();
@@ -806,9 +805,7 @@ public class Main extends ApplicationAdapter {
         float x = hoverCellX * WorldGrid.CELL;
         float y = hoverCellY * WorldGrid.CELL;
 
-        boolean ok = world.grid[hoverCellX][hoverCellY] == WorldGrid.TILE_EMPTY &&
-                !player.blocksCell(world, hoverCellX, hoverCellY) &&
-                money >= getTileCost(selectedTile);
+        boolean ok = world.grid[hoverCellX][hoverCellY] == WorldGrid.TILE_EMPTY && !player.blocksCell(world, hoverCellX, hoverCellY) && money >= getTileCost(selectedTile);
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
