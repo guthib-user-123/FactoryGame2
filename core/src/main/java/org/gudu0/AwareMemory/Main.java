@@ -42,6 +42,7 @@ public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
     private float money = 1000000.0f;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private OrthographicCamera hudCamera;
     private Viewport hudViewport;
     private final Vector2 tmpHud = new Vector2();
@@ -57,6 +58,7 @@ public class Main extends ApplicationAdapter {
     private static final float COST_MERGER = 12f;
     private static final float COST_PRESS = 25f;
     private static final float COST_ROLLER = 50f;
+    private static final float COST_FILTER = 50f;
 
     private static final int HOTBAR_SLOTS = 10;
     // Each page is an array of tile IDs.
@@ -70,9 +72,9 @@ public class Main extends ApplicationAdapter {
             WorldGrid.TILE_SMELTER,
             WorldGrid.TILE_PRESS,
             WorldGrid.TILE_ROLLER,
-            0,
-            0,
-            0
+            WorldGrid.TILE_FILTER_LR,
+            WorldGrid.TILE_FILTER_FR,
+            WorldGrid.TILE_FILTER_FL
         },
         { // Page 1 (example future)
             0,0,0,0,0,0,0,0,0,0
@@ -133,6 +135,18 @@ public class Main extends ApplicationAdapter {
     @SuppressWarnings("unchecked")
     private final Animation<TextureRegion>[] rollerAnim = new Animation[4];
     private final ArrayList<Texture> rollerTextures = new ArrayList<>();
+
+    @SuppressWarnings("unchecked")
+    private final Animation<TextureRegion>[] filter_LR_Anim = new Animation[4];
+    private final ArrayList<Texture> filter_LR_Textures = new ArrayList<>();
+
+    @SuppressWarnings("unchecked")
+    private final Animation<TextureRegion>[] filter_FR_Anim = new Animation[4];
+    private final ArrayList<Texture> filter_FR_Textures = new ArrayList<>();
+
+    @SuppressWarnings("unchecked")
+    private final Animation<TextureRegion>[] filter_FL_Anim = new Animation[4];
+    private final ArrayList<Texture> filter_FL_Textures = new ArrayList<>();
 
     private boolean debugOverlay = false;
 
@@ -245,29 +259,44 @@ public class Main extends ApplicationAdapter {
             rollerAnim[2] = makeAnim("roller/roller", 1, false, rollerTextures);
             rollerAnim[3] = makeAnim("roller/roller", 1, false, rollerTextures);
 
+            filter_FL_Anim[0] = makeAnim("filter/filterFL/right/filterFL_right", 1, false, filter_FL_Textures);
+            filter_FL_Anim[1] = makeAnim("filter/filterFL/down/filterFL_down", 1, false, filter_FL_Textures);
+            filter_FL_Anim[2] = makeAnim("filter/filterFL/left/filterFL_left", 1, false, filter_FL_Textures);
+            filter_FL_Anim[3] = makeAnim("filter/filterFL/up/filterFL_up", 1, false, filter_FL_Textures);
+
+            filter_FR_Anim[0] = makeAnim("filter/filterFR/right/filterFR_right", 1, false, filter_FR_Textures);
+            filter_FR_Anim[1] = makeAnim("filter/filterFR/down/filterFR_down", 1, false, filter_FR_Textures);
+            filter_FR_Anim[2] = makeAnim("filter/filterFR/left/filterFR_left", 1, false, filter_FR_Textures);
+            filter_FR_Anim[3] = makeAnim("filter/filterFR/up/filterFR_up", 1, false, filter_FR_Textures);
+
+            filter_LR_Anim[0] = makeAnim("filter/filterLR/right/filterLR_right", 1, false, filter_LR_Textures);
+            filter_LR_Anim[1] = makeAnim("filter/filterLR/down/filterLR_down", 1, false, filter_LR_Textures);
+            filter_LR_Anim[2] = makeAnim("filter/filterLR/left/filterLR_left", 1, false, filter_LR_Textures);
+            filter_LR_Anim[3] = makeAnim("filter/filterLR/up/filterLR_up", 1, false, filter_LR_Textures);
+
 
             // Splitter sprites: [outRot][variant] where variant: 0=FL,1=FR,2=LR
             // outRot: 0=E,1=S,2=W,3=N
 
             // Output EAST (rot 0)
-            splitterSprite[0][0] = loadSplitter("splitterFL/right/splitter_FL_right1.png");
-            splitterSprite[0][1] = loadSplitter("splitterFR/right/splitter_FR_right1.png");
-            splitterSprite[0][2] = loadSplitter("splitterLR/right/splitter_LR_right1.png");
+            splitterSprite[0][0] = loadSplitter("splitter/splitterFL/right/splitter_FL_right1.png");
+            splitterSprite[0][1] = loadSplitter("splitter/splitterFR/right/splitter_FR_right1.png");
+            splitterSprite[0][2] = loadSplitter("splitter/splitterLR/right/splitter_LR_right1.png");
 
             // Output SOUTH (rot 1)
-            splitterSprite[1][0] = loadSplitter("splitterFL/down/splitter_FL_down1.png");
-            splitterSprite[1][1] = loadSplitter("splitterFR/down/splitter_FR_down1.png");
-            splitterSprite[1][2] = loadSplitter("splitterLR/down/splitter_LR_down1.png");
+            splitterSprite[1][0] = loadSplitter("splitter/splitterFL/down/splitter_FL_down1.png");
+            splitterSprite[1][1] = loadSplitter("splitter/splitterFR/down/splitter_FR_down1.png");
+            splitterSprite[1][2] = loadSplitter("splitter/splitterLR/down/splitter_LR_down1.png");
 
             // Output WEST (rot 2)
-            splitterSprite[2][0] = loadSplitter("splitterFL/left/splitter_FL_left1.png");
-            splitterSprite[2][1] = loadSplitter("splitterFR/left/splitter_FR_left1.png");
-            splitterSprite[2][2] = loadSplitter("splitterLR/left/splitter_LR_left1.png");
+            splitterSprite[2][0] = loadSplitter("splitter/splitterFL/left/splitter_FL_left1.png");
+            splitterSprite[2][1] = loadSplitter("splitter/splitterFR/left/splitter_FR_left1.png");
+            splitterSprite[2][2] = loadSplitter("splitter/splitterLR/left/splitter_LR_left1.png");
 
             // Output NORTH (rot 3)
-            splitterSprite[3][0] = loadSplitter("splitterFL/up/splitter_FL_up1.png");
-            splitterSprite[3][1] = loadSplitter("splitterFR/up/splitter_FR_up1.png");
-            splitterSprite[3][2] = loadSplitter("splitterLR/up/splitter_LR_up1.png");
+            splitterSprite[3][0] = loadSplitter("splitter/splitterFL/up/splitter_FL_up1.png");
+            splitterSprite[3][1] = loadSplitter("splitter/splitterFR/up/splitter_FR_up1.png");
+            splitterSprite[3][2] = loadSplitter("splitter/splitterLR/up/splitter_LR_up1.png");
 
 
             pressAnim[0] = makeAnim("press/press", 1, false, pressTextures);
@@ -337,6 +366,9 @@ public class Main extends ApplicationAdapter {
             registerTile(WorldGrid.TILE_SELLPAD,  COST_SELLPAD,  true, sellPadAnim,  false);
             registerTile(WorldGrid.TILE_PRESS,    COST_PRESS,    true, pressAnim,    false);
             registerTile(WorldGrid.TILE_ROLLER,   COST_ROLLER,   true, rollerAnim,   false);
+            registerTile(WorldGrid.TILE_FILTER_FL, COST_FILTER, true, filter_FL_Anim, false);
+            registerTile(WorldGrid.TILE_FILTER_FR, COST_FILTER, true, filter_FR_Anim, false);
+            registerTile(WorldGrid.TILE_FILTER_LR, COST_FILTER, true, filter_LR_Anim, false);
 
             // not manually placeable (auto-upgrade)
             // Splitter is one tile id now; variant chosen at runtime.
@@ -443,6 +475,16 @@ public class Main extends ApplicationAdapter {
         for (Texture t : rollerTextures){
             t.dispose();
         }
+        for (Texture t : filter_FL_Textures){
+            t.dispose();
+        }
+        for (Texture t : filter_FR_Textures){
+            t.dispose();
+        }
+        for (Texture t : filter_LR_Textures){
+            t.dispose();
+        }
+
 
         conveyorTextures.clear();
         smelterTextures.clear();
@@ -454,6 +496,9 @@ public class Main extends ApplicationAdapter {
         pressTextures.clear();
         splitterSpriteTextures.clear();
         rollerTextures.clear();
+        filter_FL_Textures.clear();
+        filter_FR_Textures.clear();
+        filter_LR_Textures.clear();
     }
 
     private TextureRegion loadTurn(String path) {
