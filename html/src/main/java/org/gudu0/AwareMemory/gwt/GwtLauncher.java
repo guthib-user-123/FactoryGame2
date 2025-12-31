@@ -8,7 +8,10 @@ import org.gudu0.AwareMemory.Main;
 public final class GwtLauncher extends GwtApplication {
     @Override
     public GwtApplicationConfiguration getConfig() {
-        return new GwtApplicationConfiguration(1280, 720);
+        GwtApplicationConfiguration config = new GwtApplicationConfiguration(0, 0, true);
+        config.padHorizontal = 0;
+        config.padVertical = 0;
+        return config;
     }
 
     @Override

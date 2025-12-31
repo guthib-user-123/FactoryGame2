@@ -13,28 +13,10 @@
         function preventContextMenu(e) {
           e.preventDefault();
         }
-
-        function requestFullscreenOnCanvas() {
-          var canvas = document.getElementsByTagName("canvas")[0];
-          if (!canvas) return;
-          var request =
-            canvas.requestFullscreen ||
-            canvas.webkitRequestFullscreen ||
-            canvas.mozRequestFullScreen ||
-            canvas.msRequestFullscreen;
-          if (request) request.call(canvas);
-        }
-
         document.addEventListener("contextmenu", preventContextMenu);
         document.addEventListener("keydown", function (e) {
           if (e.key === "F3") {
             e.preventDefault();
-          }
-        });
-        document.addEventListener("click", function (e) {
-          var canvas = document.getElementsByTagName("canvas")[0];
-          if (canvas && e.target === canvas) {
-            requestFullscreenOnCanvas();
           }
         });
       })();

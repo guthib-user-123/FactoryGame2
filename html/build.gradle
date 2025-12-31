@@ -33,6 +33,11 @@ gwt {
     project(":core").file("src/main/java")
   )
   modules "org.gudu0.AwareMemory.GdxDefinition"
+  compiler {
+    optimize = 9
+    style = org.wisepersist.gradle.plugins.gwt.Style.OBF
+    localWorkers = Math.max(1, Runtime.runtime.availableProcessors() - 1)
+  }
 }
 
 sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]

@@ -84,7 +84,7 @@ public class Hud {
     }
 
     public void drawFilterPanel(SpriteBatch batch, FilterEntity filter, TextureRegion white) {
-        var variant = filter.getVariant();
+        FilterEntity.Variant variant = filter.getVariant();
 
         batch.setProjectionMatrix(cam.combined);
         batch.begin();

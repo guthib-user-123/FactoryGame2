@@ -15,7 +15,7 @@ public class PlayerSystem {
     public float pushSpeed = 110f;
 
     public float centerStrength = 6.5f;
-    public float snapEps = 0.5f;
+    public float snapEpsilon = 0.5f;
 
     // Feet placement box
     public float boxW = 22f, boxH = 14f;
@@ -138,14 +138,14 @@ public class PlayerSystem {
                 float delta = (targetCenterY - feetCenterY);
                 y += delta * alpha;
 
-                if (Math.abs(delta) < snapEps) {
+                if (Math.abs(delta) < snapEpsilon) {
                     y += (targetCenterY - (boxY() + boxH / 2f));
                 }
             } else {
                 float delta = (targetCenterX - feetCenterX);
                 x += delta * alpha;
 
-                if (Math.abs(delta) < snapEps) {
+                if (Math.abs(delta) < snapEpsilon) {
                     x += (targetCenterX - (boxX() + boxW / 2f));
                 }
             }

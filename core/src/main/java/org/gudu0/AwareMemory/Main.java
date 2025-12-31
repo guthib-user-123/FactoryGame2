@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
-@SuppressWarnings({"FieldMayBeFinal", "UnusedAssignment", "EnhancedSwitchMigration"})
+@SuppressWarnings({"FieldMayBeFinal", "UnusedAssignment", "PatternVariableCanBeUsed", "EnhancedSwitchMigration"})
 public class Main extends ApplicationAdapter {
     private WorldGrid world;
     private PlayerSystem player;
@@ -51,7 +51,6 @@ public class Main extends ApplicationAdapter {
     private boolean filterUiOpen = false;
     private int filterCx = -1, filterCy = -1;
     private FilterEntity editingFilter = null;
-
 
     private static final float COST_CONVEYOR = 1f;
     private static final float COST_SMELTER  = 15f;
@@ -972,7 +971,7 @@ public class Main extends ApplicationAdapter {
 
                 if (id == WorldGrid.TILE_CONVEYOR){
                     if (tileWorld.getEntity(x, y) instanceof ConveyorEntity) {
-                        @SuppressWarnings("PatternVariableCanBeUsed") ConveyorEntity c = (ConveyorEntity) tileWorld.getEntity(x, y);
+                        ConveyorEntity c = (ConveyorEntity) tileWorld.getEntity(x, y);
 
                         // your world rot = output direction
                         Dir out = Dir.fromRot(outRot);

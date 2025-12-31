@@ -38,5 +38,18 @@ This project includes a GWT web target.
 
 Note: browsers block `file://` asset loading, so use a local server (for example `python -m http.server` from the output folder).
 
+### Hosting and caching
+
+For hosting (including GitHub Pages), deploy the contents of `html/build/gwt/out` as static files.
+
+For best performance on a configurable host, set long cache headers on hashed files:
+
+```text
+/html/*.cache.js
+/assets/*
+```
+
+and keep `index.html` and `html.nocache.js` with short/no-cache headers so updates are picked up quickly.
+
 Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
 For example, `core:clean` removes `build` folder only from the `core` project.

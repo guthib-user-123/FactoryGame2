@@ -2,7 +2,7 @@ package org.gudu0.AwareMemory.entities;
 
 import org.gudu0.AwareMemory.*;
 
-@SuppressWarnings("EnhancedSwitchMigration")
+@SuppressWarnings({"EnhancedSwitchMigration", "DataFlowIssue"})
 public final class FilterEntity extends TileEntity {
 
     public enum Variant { FL, FR, LR }
@@ -29,18 +29,20 @@ public final class FilterEntity extends TileEntity {
     public enum Out { FORWARD, LEFT, RIGHT }
 
     public int getRule(Out o) {
-        return switch (o) {
-            case FORWARD -> ruleForward;
-            case LEFT -> ruleLeft;
-            case RIGHT -> ruleRight;
+        int ruleToReturn = ruleForward; //default forward
+        switch (o) {
+            case FORWARD: ruleToReturn = ruleForward;
+            case LEFT: ruleToReturn = ruleLeft;
+            case RIGHT: ruleToReturn = ruleRight;
         };
+        return ruleToReturn;
     }
 
     public void setRule(Out o, int v) {
         switch (o) {
-            case FORWARD -> ruleForward = v;
-            case LEFT -> ruleLeft = v;
-            case RIGHT -> ruleRight = v;
+            case FORWARD: ruleForward = v;
+            case LEFT: ruleLeft = v;
+            case RIGHT: ruleRight = v;
         }
     }
 
@@ -206,24 +208,39 @@ public final class FilterEntity extends TileEntity {
 
     private boolean branchExists(Branch br) {
         // based purely on variant wiring (not the rule)
-        return switch (variant) {
-            case FL -> (br == Branch.FORWARD || br == Branch.LEFT);
-            case FR -> (br == Branch.FORWARD || br == Branch.RIGHT);
-            case LR -> (br == Branch.LEFT || br == Branch.RIGHT);
-        };
+        switch (variant) {
+            case FL:
+                return br == Branch.FORWARD || br == Branch.LEFT;
+            case FR:
+                return br == Branch.FORWARD || br == Branch.RIGHT;
+            case LR:
+                return br == Branch.LEFT || br == Branch.RIGHT;
+            default:
+                return false; // defensive, should never happen if enum is complete
+        }
     }
+
 
     private boolean ruleAllows(Branch br, ItemType t) {
-        int rule = switch (br) {
-            case FORWARD -> ruleForward;
-            case LEFT -> ruleLeft;
-            case RIGHT -> ruleRight;
-        };
-
-        if (rule == RULE_NONE) return false;
-        if (rule == RULE_ANY) return true;
+        int rule;
+        switch (br) {
+            case FORWARD:
+                rule = ruleForward;
+                break;
+            case LEFT:
+                rule = ruleLeft;
+                break;
+            case RIGHT:
+                rule = ruleRight;
+                break;
+            default:
+                return false; // defensive, should never happen
+        }
+        if (rule == RULE_NONE) {return false;}
+        if (rule == RULE_ANY) {return true;}
         return rule == t.ordinal();
     }
+
 
     @Override
     public boolean outputsTo(Dir outEdge) {
