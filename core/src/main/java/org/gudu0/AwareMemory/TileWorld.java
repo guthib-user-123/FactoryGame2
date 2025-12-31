@@ -231,6 +231,15 @@ public final class TileWorld {
             case WorldGrid.TILE_ROLLER:
                 created = new RollerEntity(cx, cy, rot);
                 break;
+            case WorldGrid.TILE_FILTER_FL:
+                created = new FilterEntity(cx, cy, rot, FilterEntity.Variant.FL);
+                break;
+            case WorldGrid.TILE_FILTER_FR:
+                created = new FilterEntity(cx, cy, rot, FilterEntity.Variant.FR);
+                break;
+            case WorldGrid.TILE_FILTER_LR:
+                created = new FilterEntity(cx, cy, rot, FilterEntity.Variant.LR);
+                break;
             default:
                 created = null;
                 break;
@@ -449,6 +458,5 @@ public final class TileWorld {
         public float x() { return x; }
         public float y() { return y; }
     }
-
 
 }

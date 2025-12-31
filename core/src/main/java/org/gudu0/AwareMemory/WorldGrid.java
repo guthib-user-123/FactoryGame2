@@ -149,5 +149,7 @@ public class WorldGrid {
         pendingTileSaves = null;
     }
 
-
+    public int getTileID(int x, int y) {
+        return grid[x][y];
+    }
 }

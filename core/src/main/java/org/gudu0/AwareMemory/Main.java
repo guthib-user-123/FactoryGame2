@@ -19,6 +19,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
+import org.gudu0.AwareMemory.entities.FilterEntity;
 import org.gudu0.AwareMemory.entities.SplitterEntity;
 
 import java.util.ArrayList;
@@ -47,6 +48,9 @@ public class Main extends ApplicationAdapter {
     private Viewport hudViewport;
     private final Vector2 tmpHud = new Vector2();
 
+    private boolean filterUiOpen = false;
+    private int filterCx = -1, filterCy = -1;
+    private FilterEntity editingFilter = null;
 
 
     private static final float COST_CONVEYOR = 1f;
@@ -402,7 +406,7 @@ public class Main extends ApplicationAdapter {
         doRotationInput();
 
         boolean clickedHud = doHotbarMouseClick();
-        if (!clickedHud) {
+        if (!clickedHud && !filterUiOpen) {
             doGetPlacement();
         }
         tileWorld.update(dt)    ;
@@ -515,6 +519,27 @@ public class Main extends ApplicationAdapter {
         Texture t = new Texture(Gdx.files.internal(path));
         splitterSpriteTextures.add(t);
         return new TextureRegion(t);
+    }
+
+    private boolean tryOpenFilterUI() {
+        if (!Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) return false;
+        if (!Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) && !Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT)) return false;
+
+        // get hovered tile cell (use whatever you already use in placement)
+        int cx = hoverCellX;
+        int cy = hoverCellY;
+
+        int id = world.getTileID(cx, cy);
+        if (id != WorldGrid.TILE_FILTER_FL && id != WorldGrid.TILE_FILTER_FR && id != WorldGrid.TILE_FILTER_LR) return false;
+
+        TileEntity te = tileWorld.getEntity(cx, cy);
+        if (!(te instanceof FilterEntity)) return false;
+
+        editingFilter = (FilterEntity) te;
+        filterCx = cx;
+        filterCy = cy;
+        filterUiOpen = true;
+        return true; // consume click
     }
 
     private Vector2 getHudMouse() {
