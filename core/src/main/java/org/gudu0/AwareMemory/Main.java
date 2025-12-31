@@ -49,6 +49,7 @@ public class Main extends ApplicationAdapter {
     private static final float COST_SPLITTER = 12f;
     private static final float COST_MERGER = 12f;
     private static final float COST_PRESS = 25f;
+    private static final float COST_ROLLER = 50f;
 
     private static final int HOTBAR_SLOTS = 10;
     // Each page is an array of tile IDs.
@@ -56,12 +57,12 @@ public class Main extends ApplicationAdapter {
     private final int[][] hotbarPages = {
         { // Page 0
             WorldGrid.TILE_CONVEYOR,
-            WorldGrid.TILE_SMELTER,
+            WorldGrid.TILE_CRUSHER,
             WorldGrid.TILE_SELLPAD,
             WorldGrid.TILE_SPAWNER,
-            WorldGrid.TILE_CRUSHER,
+            WorldGrid.TILE_SMELTER,
             WorldGrid.TILE_PRESS,
-            0,
+            WorldGrid.TILE_ROLLER,
             0,
             0,
             0
@@ -119,8 +120,12 @@ public class Main extends ApplicationAdapter {
     private TextureRegion[][] mergerSprite = new TextureRegion[4][3]; // [outRot][variant]
     private final ArrayList<Texture> mergerSpriteTextures = new ArrayList<>();
 
-    private TextureRegion[][] conveyorTurn = new TextureRegion[4][2]; // [rot][0=left,1=right]
+    private final TextureRegion[][] conveyorTurn = new TextureRegion[4][2]; // [rot][0=left,1=right]
     private final ArrayList<Texture> conveyorTurnTextures = new ArrayList<>();
+
+    @SuppressWarnings("unchecked")
+    private final Animation<TextureRegion>[] rollerAnim = new Animation[4];
+    private final ArrayList<Texture> rollerTextures = new ArrayList<>();
 
     private boolean debugOverlay = false;
 
@@ -139,6 +144,20 @@ public class Main extends ApplicationAdapter {
     private Texture rodTex;
     private Texture machinePartsTex;
 
+    // TO ADD A NEW MACHINE
+    {
+        /*
+        After this, adding a new machine becomes:
+        In Main.java:
+        Add/load its newMachineAnim[4] + newMachineTextures
+        Call registerTile(TILE_NEW, COST_NEW, true, newMachineAnim, false)
+        Put it in hotbarPages[...] if you want it selectable
+
+        Still required elsewhere (unavoidable):
+        WorldGrid: add TILE_NEW constant
+        TileWorld.rebuildEntityAt: create new NewMachineEntity(...)
+        */
+    }
 
     // --- METHODS --- \\
     @SuppressWarnings({"SpellCheckingInspection"})
@@ -209,20 +228,11 @@ public class Main extends ApplicationAdapter {
             crusherAnim[2] = makeAnim("crusher/left/crusher_left", 1, false, crusherTextures);
             crusherAnim[3] = makeAnim("crusher/up/crusher_up", 1, false, crusherTextures);
 
-//            splitterLRAnim[0] = makeAnim("splitterLR/right/splitter_LR_right", 1, false, splitterLRTextures);
-//            splitterLRAnim[1] = makeAnim("splitterLR/down/splitter_LR_down", 1, false, splitterLRTextures);
-//            splitterLRAnim[2] = makeAnim("splitterLR/left/splitter_LR_left", 1, false, splitterLRTextures);
-//            splitterLRAnim[3] = makeAnim("splitterLR/up/splitter_LR_up", 1, false, splitterLRTextures);
-//
-//            splitterFRAnim[0] = makeAnim("splitterFR/right/splitter_FR_right", 1, false, splitterFRTextures);
-//            splitterFRAnim[1] = makeAnim("splitterFR/down/splitter_FR_down", 1, false, splitterFRTextures);
-//            splitterFRAnim[2] = makeAnim("splitterFR/left/splitter_FR_left", 1, false, splitterFRTextures);
-//            splitterFRAnim[3] = makeAnim("splitterFR/up/splitter_FR_up", 1, false, splitterFRTextures);
-//
-//            splitterFLAnim[0] = makeAnim("splitterFL/right/splitter_FL_right", 1, false, splitterFLTextures);
-//            splitterFLAnim[1] = makeAnim("splitterFL/down/splitter_FL_down", 1, false, splitterFLTextures);
-//            splitterFLAnim[2] = makeAnim("splitterFL/left/splitter_FL_left", 1, false, splitterFLTextures);
-//            splitterFLAnim[3] = makeAnim("splitterFL/up/splitter_FL_up", 1, false, splitterFLTextures);
+            rollerAnim[0] = makeAnim("roller/roller", 1, false, rollerTextures);
+            rollerAnim[1] = makeAnim("roller/roller", 1, false, rollerTextures);
+            rollerAnim[2] = makeAnim("roller/roller", 1, false, rollerTextures);
+            rollerAnim[3] = makeAnim("roller/roller", 1, false, rollerTextures);
+
 
             // Splitter sprites: [outRot][variant] where variant: 0=FL,1=FR,2=LR
             // outRot: 0=E,1=S,2=W,3=N
@@ -314,6 +324,7 @@ public class Main extends ApplicationAdapter {
             registerTile(WorldGrid.TILE_SPAWNER,  COST_SPAWNER,  true, spawnerAnim,  false);
             registerTile(WorldGrid.TILE_SELLPAD,  COST_SELLPAD,  true, sellPadAnim,  false);
             registerTile(WorldGrid.TILE_PRESS,    COST_PRESS,    true, pressAnim,    false);
+            registerTile(WorldGrid.TILE_ROLLER,   COST_ROLLER,   true, rollerAnim,   false);
 
             // not manually placeable (auto-upgrade)
             // Splitter is one tile id now; variant chosen at runtime.
@@ -411,6 +422,9 @@ public class Main extends ApplicationAdapter {
         for (Texture t : pressTextures){
             t.dispose();
         }
+        for (Texture t : rollerTextures){
+            t.dispose();
+        }
 
         conveyorTextures.clear();
         smelterTextures.clear();
@@ -421,6 +435,7 @@ public class Main extends ApplicationAdapter {
         mergerSpriteTextures.clear();
         pressTextures.clear();
         splitterSpriteTextures.clear();
+        rollerTextures.clear();
     }
 
     private TextureRegion loadTurn(String path) {

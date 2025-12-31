@@ -20,6 +20,7 @@ public class WorldGrid {
     public static final int TILE_SPLITTER = 6;
     public static final int TILE_MERGER = 7;
     public static final int TILE_PRESS = 8;
+    public static final int TILE_ROLLER = 9;
 
     public final float WORLD_W;
     public final float WORLD_H;

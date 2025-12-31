@@ -158,7 +158,6 @@ public final class TileWorld {
         }
     }
 
-
     public int exportNextItemId() { return nextItemId; }
 
     private void refreshSplitterVariantAt(int cx, int cy) {
@@ -223,12 +222,14 @@ public final class TileWorld {
             case WorldGrid.TILE_SPLITTER:
                 created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.FL); // temp default
                 break;
-
             case WorldGrid.TILE_MERGER:
                 created = new MergerEntity(cx, cy, rot);
                 break;
             case WorldGrid.TILE_PRESS:
                 created = new PressEntity(cx, cy, rot);
+                break;
+            case WorldGrid.TILE_ROLLER:
+                created = new RollerEntity(cx, cy, rot);
                 break;
             default:
                 created = null;
