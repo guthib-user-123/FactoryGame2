@@ -2,6 +2,7 @@ package org.gudu0.AwareMemory.entities;
 
 import org.gudu0.AwareMemory.*;
 
+@SuppressWarnings("EnhancedSwitchMigration")
 public final class FilterEntity extends TileEntity {
 
     public enum Variant { FL, FR, LR }
@@ -15,14 +16,6 @@ public final class FilterEntity extends TileEntity {
 
     // Alternates between outputs (same behavior as splitter)
     private boolean toggle = false;
-
-    // null = Any, ItemType = that type only, special sentinel = None
-    private ItemType filterForward = null;
-    private ItemType filterLeft = null;
-    private ItemType filterRight = null;
-    private boolean noneForward = false;
-    private boolean noneLeft = false;
-    private boolean noneRight = false;
 
 
     public static final int RULE_ANY  = -1;
@@ -176,18 +169,60 @@ public final class FilterEntity extends TileEntity {
 
         if (item.enteredThisTick(currentTick)) return;
 
-        // (Later you’ll add filtering logic here.)
-        Branch a = firstChoice();
-        Branch b = secondChoice();
+        ItemType t = item.type;
 
-        if (tryMoveFromDecisionToBranch(a)) {
-            toggle = !toggle;
-            return;
+        boolean okF = branchExists(Branch.FORWARD) && ruleAllows(Branch.FORWARD, t);
+        boolean okL = branchExists(Branch.LEFT)    && ruleAllows(Branch.LEFT, t);
+        boolean okR = branchExists(Branch.RIGHT)   && ruleAllows(Branch.RIGHT, t);
+
+        // No allowed outputs -> jam
+        if (!okF && !okL && !okR) return;
+
+        // Try to route. If 2+ options, use toggle as a simple round-robin.
+        // Strategy: build an order list depending on toggle.
+        Branch[] order = new Branch[3];
+        int n = 0;
+
+        if (toggle) {
+            if (okR) order[n++] = Branch.RIGHT;
+            if (okL) order[n++] = Branch.LEFT;
+            if (okF) order[n++] = Branch.FORWARD;
+        } else {
+            if (okL) order[n++] = Branch.LEFT;
+            if (okR) order[n++] = Branch.RIGHT;
+            if (okF) order[n++] = Branch.FORWARD;
         }
-        if (tryMoveFromDecisionToBranch(b)) {
-            toggle = !toggle;
+
+        for (int i = 0; i < n; i++) {
+            if (tryMoveFromDecisionToBranch(order[i])) {
+                // Only flip when we successfully move (keeps jams stable)
+                toggle = !toggle;
+                return;
+            }
         }
-        // else jam
+        // all candidate branches blocked -> jam
+    }
+
+
+    private boolean branchExists(Branch br) {
+        // based purely on variant wiring (not the rule)
+        return switch (variant) {
+            case FL -> (br == Branch.FORWARD || br == Branch.LEFT);
+            case FR -> (br == Branch.FORWARD || br == Branch.RIGHT);
+            case LR -> (br == Branch.LEFT || br == Branch.RIGHT);
+        };
+    }
+
+    private boolean ruleAllows(Branch br, ItemType t) {
+        int rule = switch (br) {
+            case FORWARD -> ruleForward;
+            case LEFT -> ruleLeft;
+            case RIGHT -> ruleRight;
+        };
+
+        if (rule == RULE_NONE) return false;
+        if (rule == RULE_ANY) return true;
+        return rule == t.ordinal();
     }
 
     @Override

@@ -30,6 +30,23 @@ public class Hud {
     final float valueW = 260f;
     final float valueH = 34f;
 
+    // Row vertical layout (edit THESE to move rows)
+    final float rowsTopPad = 100f;   // distance from panel top to first row's box bottom
+    final float rowStep = 44f;      // distance between row box bottoms (can be != valueH)
+
+    // Returns the Y (bottom) of the first row's value box
+    private float firstRowY() {
+        return fpY + fpH - rowsTopPad;
+    }
+
+    // Computes row Y positions in the exact same order you draw/click
+    private float rowYForward() { return firstRowY(); }
+    private float rowYLeft(boolean hasForward) { return firstRowY() - (hasForward ? rowStep : 0f); }
+    private float rowYRight(boolean hasForward, boolean hasLeft) {
+        return firstRowY() - (hasForward ? rowStep : 0f) - (hasLeft ? rowStep : 0f);
+    }
+
+
     public boolean isOverFilterPanel(float hudX, float hudY) {
         return hudX >= fpX && hudX <= fpX + fpW && hudY >= fpY && hudY <= fpY + fpH;
     }
@@ -51,15 +68,13 @@ public class Hud {
         boolean hasRight   = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FR ||
             variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.LR);
 
-        float y = fpY + fpH - 70f;
+        float yF = rowYForward();
+        float yL = rowYLeft(hasForward);
+        float yR = rowYRight(hasForward, hasLeft);
 
-        if (hasForward && inBox(hudX, hudY, valueX, y, valueW, valueH)) return 0;
-        if (hasForward) y -= rowH;
-
-        if (hasLeft && inBox(hudX, hudY, valueX, y, valueW, valueH)) return 1;
-        if (hasLeft) y -= rowH;
-
-        if (hasRight && inBox(hudX, hudY, valueX, y, valueW, valueH)) return 2;
+        if (hasForward && inBox(hudX, hudY, valueX, yF, valueW, valueH)) return 0;
+        if (hasLeft    && inBox(hudX, hudY, valueX, yL, valueW, valueH)) return 1;
+        if (hasRight   && inBox(hudX, hudY, valueX, yR, valueW, valueH)) return 2;
 
         return -1;
     }
@@ -98,11 +113,13 @@ public class Hud {
         boolean hasRight   = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FR ||
             variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.LR);
 
-        float y = fpY + fpH - 70f;
+        float yF = rowYForward();
+        float yL = rowYLeft(hasForward);
+        float yR = rowYRight(hasForward, hasLeft);
 
-        if (hasForward) { drawRow(batch, white, "Forward", ruleText(filter.getRule(org.gudu0.AwareMemory.entities.FilterEntity.Out.FORWARD)), y); y -= rowH; }
-        if (hasLeft)    { drawRow(batch, white, "Left",    ruleText(filter.getRule(org.gudu0.AwareMemory.entities.FilterEntity.Out.LEFT)), y);    y -= rowH; }
-        if (hasRight)   { drawRow(batch, white, "Right",   ruleText(filter.getRule(org.gudu0.AwareMemory.entities.FilterEntity.Out.RIGHT)), y);   y -= rowH; }
+        if (hasForward) drawRow(batch, white, "Forward", ruleText(filter.getRule(FilterEntity.Out.FORWARD)), yF);
+        if (hasLeft)    drawRow(batch, white, "Left",    ruleText(filter.getRule(FilterEntity.Out.LEFT)),    yL);
+        if (hasRight)   drawRow(batch, white, "Right",   ruleText(filter.getRule(FilterEntity.Out.RIGHT)),   yR);
 
         batch.end();
     }

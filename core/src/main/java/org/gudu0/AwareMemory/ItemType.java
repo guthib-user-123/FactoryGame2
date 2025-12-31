@@ -4,7 +4,7 @@ public enum ItemType {
     ORE,
     DUST,
     INGOT,
-    CRUSHED_ORE,
+//    CRUSHED_ORE,
     GEAR,
     PLATE,
     ROD,

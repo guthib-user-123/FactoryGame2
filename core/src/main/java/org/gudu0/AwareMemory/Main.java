@@ -1163,10 +1163,10 @@ public class Main extends ApplicationAdapter {
                     tex = ingotTex;
                     break;
                 }
-                case CRUSHED_ORE: {
-                    tex = crushedOreTex;
-                    break;
-                }
+//                case CRUSHED_ORE: {
+//                    tex = crushedOreTex;
+//                    break;
+//                }
                 case GEAR: {
                     tex = gearTex;
                     break;
