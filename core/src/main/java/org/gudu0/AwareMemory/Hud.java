@@ -6,27 +6,28 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import org.gudu0.AwareMemory.entities.FilterEntity;
 
+@SuppressWarnings("EnhancedSwitchMigration")
 public class Hud {
     public final OrthographicCamera cam;
     public final BitmapFont uiFont;
     public final BitmapFont smallFont;
     final float slotSize = 64f;
     final float pad = 8f;
-    final float barW = (slotSize * 10f) + (pad * 11f);
+    final float hotbarWidth = (slotSize * 10f) + (pad * 11f);
 
-    final float x0 = (1920f - barW) / 2f;
-    final float y0 = 20f;
+    final float hotbarX = (1920f - hotbarWidth) / 2f;
+    final float hotbarY = 20f;
 
     // Filter panel layout (HUD coords)
-    final float fpW = 520f;
-    final float fpH = 220f;
-    final float fpX = (1920f - fpW) / 2f;
-    final float fpY = y0 + slotSize + pad * 2f + 20f; // just above hotbar
+    final float filterPanelWidth = 520f;
+    final float filterPanelHeight = 220f;
+    final float filterPanelX = (1920f - filterPanelWidth) / 2f;
+    final float filterPanelY = hotbarY + slotSize + pad * 2f + 20f; // just above hotbar
 
     // Value box layout
     final float rowH = 44f;
-    final float labelX = fpX + 20f;
-    final float valueX = fpX + 220f;
+    final float filterLabelX = filterPanelX + 20f;
+    final float valueX = filterPanelX + 220f;
     final float valueW = 260f;
     final float valueH = 34f;
 
@@ -36,7 +37,7 @@ public class Hud {
 
     // Returns the Y (bottom) of the first row's value box
     private float firstRowY() {
-        return fpY + fpH - rowsTopPad;
+        return filterPanelY + filterPanelHeight - rowsTopPad;
     }
 
     // Computes row Y positions in the exact same order you draw/click
@@ -48,7 +49,7 @@ public class Hud {
 
 
     public boolean isOverFilterPanel(float hudX, float hudY) {
-        return hudX >= fpX && hudX <= fpX + fpW && hudY >= fpY && hudY <= fpY + fpH;
+        return hudX >= filterPanelX && hudX <= filterPanelX + filterPanelWidth && hudY >= filterPanelY && hudY <= filterPanelY + filterPanelHeight;
     }
 
     // Returns: -1 none, 0 forward, 1 left, 2 right, 99 close
@@ -56,8 +57,8 @@ public class Hud {
         if (!isOverFilterPanel(hudX, hudY)) return -1;
 
         // close button (top-right)
-        float cx = fpX + fpW - 34f;
-        float cy = fpY + fpH - 34f;
+        float cx = filterPanelX + filterPanelWidth - 34f;
+        float cy = filterPanelY + filterPanelHeight - 34f;
         if (hudX >= cx && hudX <= cx + 24f && hudY >= cy && hudY <= cy + 24f) return 99;
 
         // rows present depends on variant
@@ -91,16 +92,16 @@ public class Hud {
 
         // panel bg
         batch.setColor(0f, 0f, 0f, 0.75f);
-        batch.draw(white, fpX, fpY, fpW, fpH);
+        batch.draw(white, filterPanelX, filterPanelY, filterPanelWidth, filterPanelHeight);
         batch.setColor(1f, 1f, 1f, 1f);
 
-        uiFont.draw(batch, "Filter", fpX + 16f, fpY + fpH - 16f);
+        uiFont.draw(batch, "Filter", filterPanelX + 16f, filterPanelY + filterPanelHeight - 16f);
         smallFont.draw(batch, "Shift+Click to open - LMB next - RMB prev - Esc close",
-            fpX + 16f, fpY + 20f);
+            filterPanelX + 16f, filterPanelY + 20f);
 
         // close button
-        float cx = fpX + fpW - 34f;
-        float cy = fpY + fpH - 34f;
+        float cx = filterPanelX + filterPanelWidth - 34f;
+        float cy = filterPanelY + filterPanelHeight - 34f;
         batch.setColor(0.2f, 0.2f, 0.2f, 1f);
         batch.draw(white, cx, cy, 24f, 24f);
         batch.setColor(1f, 1f, 1f, 1f);
@@ -125,7 +126,7 @@ public class Hud {
     }
 
     private void drawRow(SpriteBatch batch, TextureRegion white, String label, String value, float y) {
-        smallFont.draw(batch, label + ":", labelX, y + 24f);
+        smallFont.draw(batch, label + ":", filterLabelX, y + 24f);
 
         batch.setColor(0.15f, 0.15f, 0.15f, 1f);
         batch.draw(white, valueX, y, valueW, valueH);
@@ -154,7 +155,27 @@ public class Hud {
         smallFont.getData().setScale(1.0f);
     }
 
-    public void draw(SpriteBatch batch, float money, int itemCount, int page, int slot, int[] pageTiles, TextureRegion[] iconByTileId, TextureRegion white) {
+    private static String tileName(int tileId) {
+        switch (tileId) {
+            case WorldGrid.TILE_CONVEYOR: return "Conveyor";
+            case WorldGrid.TILE_SMELTER:  return "Smelter";
+            case WorldGrid.TILE_CRUSHER:  return "Crusher";
+            case WorldGrid.TILE_SPAWNER:  return "Spawner";
+            case WorldGrid.TILE_SELLPAD:  return "Sellpad";
+            case WorldGrid.TILE_PRESS:    return "Press";
+            case WorldGrid.TILE_ROLLER:   return "Roller";
+            case WorldGrid.TILE_FILTER_FL:return "Filter (F+L)";
+            case WorldGrid.TILE_FILTER_FR:return "Filter (F+R)";
+            case WorldGrid.TILE_FILTER_LR:return "Filter (L+R)";
+            case WorldGrid.TILE_SPLITTER: return "Splitter";
+            case WorldGrid.TILE_MERGER:   return "Merger";
+            default: return "Tile " + tileId;
+        }
+    }
+
+
+    public void draw(SpriteBatch batch, float money, int itemCount, int page, int slot, int hoverSlot, int[] pageTiles, TextureRegion[] iconByTileId, TextureRegion white, float[] costByTile)
+    {
 
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
@@ -163,13 +184,13 @@ public class Hud {
 
         // background strip
         batch.setColor(0f, 0f, 0f, 0.5f);
-        batch.draw(white, x0, y0, barW, slotSize + pad * 2f);
+        batch.draw(white, hotbarX, hotbarY, hotbarWidth, slotSize + pad * 2f);
         batch.setColor(1f, 1f, 1f, 1f);
 
         // slots
         for (int i = 0; i < 10; i++) {
-            float x = x0 + pad + i * (slotSize + pad);
-            float y = y0 + pad;
+            float x = hotbarX + pad + i * (slotSize + pad);
+            float y = hotbarY + pad;
 
             // slot background
             batch.setColor(0.15f, 0.15f, 0.15f, 0.9f);
@@ -198,7 +219,40 @@ public class Hud {
         }
 
         // optional: small page indicator (tiny text is fine)
-        smallFont.draw(batch, "Page " + (page + 1), x0, y0 + slotSize + pad * 2f + 18f);
+        smallFont.draw(batch, "Page " + (page + 1), hotbarX, hotbarY + slotSize + pad * 2f + 18f);
+
+        // --- Hover tooltip ---
+        if (hoverSlot >= 0 && hoverSlot < 10) {
+            int tileId = pageTiles[hoverSlot];
+            if (tileId != 0) {
+                String name = tileName(tileId);
+
+                float cost = (tileId >= 0 && tileId < costByTile.length) ? costByTile[tileId] : 0f;
+
+                String line1 = name;
+                String line2 = "$" + (int) ((int) (cost * 10f) / 10f);
+
+                // position tooltip above the hovered slot
+                float sx = hotbarX + pad + hoverSlot * (slotSize + pad);
+                float sy = hotbarY + pad;
+
+                float descPopupWidth = 180f;
+                float gapBetweenNameAndPrice = 50f;
+                float tx = sx + slotSize * 0.5f - descPopupWidth * 0.5f;
+                float ty = sy + slotSize + 16f;
+
+                // clamp inside screen
+                if (tx < 10f) tx = 10f;
+                if (tx + descPopupWidth > 1910f) tx = 1910f - descPopupWidth;
+
+                batch.setColor(0f, 0f, 0f, 0.75f);
+                batch.draw(white, tx, ty, descPopupWidth, gapBetweenNameAndPrice);
+                batch.setColor(1f, 1f, 1f, 1f);
+
+                smallFont.draw(batch, line1, tx + 10f, ty + gapBetweenNameAndPrice - 8f);
+                smallFont.draw(batch, line2, tx + 10f, ty + 23f);
+            }
+        }
 
         batch.end();
     }
@@ -210,14 +264,14 @@ public class Hud {
     // Returns -1 if not over any slot, else 0..9
     public int slotAt(float hudX, float hudY) {
         float barH = slotSize + pad * 2f;
-        if (hudX < x0 || hudX > x0 + barW) return -1;
-        if (hudY < y0 || hudY > y0 + barH) return -1;
+        if (hudX < hotbarX || hudX > hotbarX + hotbarWidth) return -1;
+        if (hudY < hotbarY || hudY > hotbarY + barH) return -1;
 
-        float slotsY = y0 + pad;
+        float slotsY = hotbarY + pad;
         if (hudY < slotsY || hudY > slotsY + slotSize) return -1;
 
         for (int i = 0; i < 10; i++) {
-            float sx = x0 + pad + i * (slotSize + pad);
+            float sx = hotbarX + pad + i * (slotSize + pad);
             float sy = slotsY;
             if (hudX >= sx && hudX <= sx + slotSize && hudY >= sy && hudY <= sy + slotSize) {
                 return i;
@@ -228,7 +282,7 @@ public class Hud {
 
     public boolean isOverHotbar(float hudX, float hudY) {
         float barH = slotSize + pad * 2f;
-        return hudX >= x0 && hudX <= x0 + barW && hudY >= y0 && hudY <= y0 + barH;
+        return hudX >= hotbarX && hudX <= hotbarX + hotbarWidth && hudY >= hotbarY && hudY <= hotbarY + barH;
     }
 
     public void dispose() {

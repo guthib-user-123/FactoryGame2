@@ -29,22 +29,22 @@ public final class FilterEntity extends TileEntity {
     public enum Out { FORWARD, LEFT, RIGHT }
 
     public int getRule(Out o) {
-        int ruleToReturn = ruleForward; //default forward
         switch (o) {
-            case FORWARD: ruleToReturn = ruleForward;
-            case LEFT: ruleToReturn = ruleLeft;
-            case RIGHT: ruleToReturn = ruleRight;
-        };
-        return ruleToReturn;
+            case FORWARD: return ruleForward;
+            case LEFT:    return ruleLeft;
+            case RIGHT:   return ruleRight;
+            default:      return ruleForward;
+        }
     }
 
     public void setRule(Out o, int v) {
         switch (o) {
-            case FORWARD: ruleForward = v;
-            case LEFT: ruleLeft = v;
-            case RIGHT: ruleRight = v;
+            case FORWARD: ruleForward = v; break;
+            case LEFT:    ruleLeft = v;    break;
+            case RIGHT:   ruleRight = v;   break;
         }
     }
+
 
     public void cycleRule(Out o, int delta) {
         int cur = getRule(o);
@@ -182,26 +182,37 @@ public final class FilterEntity extends TileEntity {
 
         // Try to route. If 2+ options, use toggle as a simple round-robin.
         // Strategy: build an order list depending on toggle.
-        Branch[] order = new Branch[3];
-        int n = 0;
+        // Build the alternating preference based on THIS filter variant.
 
-        if (toggle) {
-            if (okR) order[n++] = Branch.RIGHT;
-            if (okL) order[n++] = Branch.LEFT;
-            if (okF) order[n++] = Branch.FORWARD;
-        } else {
-            if (okL) order[n++] = Branch.LEFT;
-            if (okR) order[n++] = Branch.RIGHT;
-            if (okF) order[n++] = Branch.FORWARD;
+        // FL alternates between FORWARD <-> LEFT
+        // FR alternates between FORWARD <-> RIGHT
+        // LR alternates between LEFT <-> RIGHT
+        Branch first = null;
+        Branch second = null;
+
+        switch (variant) {
+            case FL:
+                first  = toggle ? Branch.LEFT    : Branch.FORWARD;
+                second = toggle ? Branch.FORWARD : Branch.LEFT;
+                break;
+            case FR:
+                first  = toggle ? Branch.RIGHT   : Branch.FORWARD;
+                second = toggle ? Branch.FORWARD : Branch.RIGHT;
+                break;
+            case LR:
+                first  = toggle ? Branch.RIGHT   : Branch.LEFT;
+                second = toggle ? Branch.LEFT    : Branch.RIGHT;
+                break;
         }
 
-        for (int i = 0; i < n; i++) {
-            if (tryMoveFromDecisionToBranch(order[i])) {
-                // Only flip when we successfully move (keeps jams stable)
-                toggle = !toggle;
-                return;
-            }
+        if (first != null && branchExists(first) && ruleAllows(first, t)) {
+            if (tryMoveFromDecisionToBranch(first)) { toggle = !toggle; return; }
         }
+        if (second != null && branchExists(second) && ruleAllows(second, t)) {
+            if (tryMoveFromDecisionToBranch(second)) { toggle = !toggle; return; }
+        }
+        // otherwise jam (either no allowed outputs or both blocked)
+
         // all candidate branches blocked -> jam
     }
 

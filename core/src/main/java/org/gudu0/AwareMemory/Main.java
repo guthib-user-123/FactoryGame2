@@ -87,6 +87,7 @@ public class Main extends ApplicationAdapter {
     private int hotbarPage = 0;
     private int hotbarSlot = 0; // 0..9
     private int scrollDelta = 0;
+    private int hotbarHoverSlot = -1;
 
     private static final int MAX_TILE_ID = 256;
 
@@ -427,7 +428,20 @@ public class Main extends ApplicationAdapter {
         if (debugOverlay) {
             drawDebugOverlay();
         }
-        hud.draw(batch, money, tileWorld.itemCount(), hotbarPage, hotbarSlot, hotbarPages[hotbarPage], iconByTileId, whiteRegion);
+        Vector2 hm = getHudMouse();
+        hotbarHoverSlot = hud.slotAt(hm.x, hm.y);
+        hud.draw(batch,
+            money,
+            tileWorld.itemCount(),
+            hotbarPage,
+            hotbarSlot,
+            hotbarHoverSlot,
+            hotbarPages[hotbarPage],
+            iconByTileId,
+            whiteRegion,
+            costByTile  // or getTileCost via callback; easiest is pass array
+        );
+
         if (filterUiOpen && editingFilter != null) {
             hud.drawFilterPanel(batch, editingFilter, whiteRegion);
         }
