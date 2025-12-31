@@ -65,7 +65,7 @@ public class WorldGrid {
 
         // machine-specific fields (sparse; only some used per tile)
         public float f0, f1;
-        public int i0, i1;
+        public int i0, i1, i2;
         public boolean b0;
     }
 

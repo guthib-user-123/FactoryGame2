@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import org.gudu0.AwareMemory.entities.FilterEntity;
 
 public class Hud {
     public final OrthographicCamera cam;
@@ -15,6 +16,113 @@ public class Hud {
 
     final float x0 = (1920f - barW) / 2f;
     final float y0 = 20f;
+
+    // Filter panel layout (HUD coords)
+    final float fpW = 520f;
+    final float fpH = 220f;
+    final float fpX = (1920f - fpW) / 2f;
+    final float fpY = y0 + slotSize + pad * 2f + 20f; // just above hotbar
+
+    // Value box layout
+    final float rowH = 44f;
+    final float labelX = fpX + 20f;
+    final float valueX = fpX + 220f;
+    final float valueW = 260f;
+    final float valueH = 34f;
+
+    public boolean isOverFilterPanel(float hudX, float hudY) {
+        return hudX >= fpX && hudX <= fpX + fpW && hudY >= fpY && hudY <= fpY + fpH;
+    }
+
+    // Returns: -1 none, 0 forward, 1 left, 2 right, 99 close
+    public int filterButtonAt(float hudX, float hudY, org.gudu0.AwareMemory.entities.FilterEntity.Variant variant) {
+        if (!isOverFilterPanel(hudX, hudY)) return -1;
+
+        // close button (top-right)
+        float cx = fpX + fpW - 34f;
+        float cy = fpY + fpH - 34f;
+        if (hudX >= cx && hudX <= cx + 24f && hudY >= cy && hudY <= cy + 24f) return 99;
+
+        // rows present depends on variant
+        boolean hasForward = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FL ||
+            variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FR);
+        boolean hasLeft    = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FL ||
+            variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.LR);
+        boolean hasRight   = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FR ||
+            variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.LR);
+
+        float y = fpY + fpH - 70f;
+
+        if (hasForward && inBox(hudX, hudY, valueX, y, valueW, valueH)) return 0;
+        if (hasForward) y -= rowH;
+
+        if (hasLeft && inBox(hudX, hudY, valueX, y, valueW, valueH)) return 1;
+        if (hasLeft) y -= rowH;
+
+        if (hasRight && inBox(hudX, hudY, valueX, y, valueW, valueH)) return 2;
+
+        return -1;
+    }
+
+    private static boolean inBox(float x, float y, float bx, float by, float bw, float bh) {
+        return x >= bx && x <= bx + bw && y >= by && y <= by + bh;
+    }
+
+    public void drawFilterPanel(SpriteBatch batch, FilterEntity filter, TextureRegion white) {
+        var variant = filter.getVariant();
+
+        batch.setProjectionMatrix(cam.combined);
+        batch.begin();
+
+        // panel bg
+        batch.setColor(0f, 0f, 0f, 0.75f);
+        batch.draw(white, fpX, fpY, fpW, fpH);
+        batch.setColor(1f, 1f, 1f, 1f);
+
+        uiFont.draw(batch, "Filter", fpX + 16f, fpY + fpH - 16f);
+        smallFont.draw(batch, "Shift+Click to open - LMB next - RMB prev - Esc close",
+            fpX + 16f, fpY + 20f);
+
+        // close button
+        float cx = fpX + fpW - 34f;
+        float cy = fpY + fpH - 34f;
+        batch.setColor(0.2f, 0.2f, 0.2f, 1f);
+        batch.draw(white, cx, cy, 24f, 24f);
+        batch.setColor(1f, 1f, 1f, 1f);
+        smallFont.draw(batch, "X", cx + 7f, cy + 18f);
+
+        boolean hasForward = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FL ||
+            variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FR);
+        boolean hasLeft    = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FL ||
+            variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.LR);
+        boolean hasRight   = (variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.FR ||
+            variant == org.gudu0.AwareMemory.entities.FilterEntity.Variant.LR);
+
+        float y = fpY + fpH - 70f;
+
+        if (hasForward) { drawRow(batch, white, "Forward", ruleText(filter.getRule(org.gudu0.AwareMemory.entities.FilterEntity.Out.FORWARD)), y); y -= rowH; }
+        if (hasLeft)    { drawRow(batch, white, "Left",    ruleText(filter.getRule(org.gudu0.AwareMemory.entities.FilterEntity.Out.LEFT)), y);    y -= rowH; }
+        if (hasRight)   { drawRow(batch, white, "Right",   ruleText(filter.getRule(org.gudu0.AwareMemory.entities.FilterEntity.Out.RIGHT)), y);   y -= rowH; }
+
+        batch.end();
+    }
+
+    private void drawRow(SpriteBatch batch, TextureRegion white, String label, String value, float y) {
+        smallFont.draw(batch, label + ":", labelX, y + 24f);
+
+        batch.setColor(0.15f, 0.15f, 0.15f, 1f);
+        batch.draw(white, valueX, y, valueW, valueH);
+        batch.setColor(1f, 1f, 1f, 1f);
+
+        smallFont.draw(batch, value, valueX + 10f, y + 24f);
+    }
+
+    private static String ruleText(int rule) {
+        if (rule == org.gudu0.AwareMemory.entities.FilterEntity.RULE_ANY) return "Any";
+        if (rule == org.gudu0.AwareMemory.entities.FilterEntity.RULE_NONE) return "None";
+        // ordinal -> name
+        return org.gudu0.AwareMemory.ItemType.values()[rule].name();
+    }
 
 
     public Hud() {
@@ -105,7 +213,6 @@ public class Hud {
         float barH = slotSize + pad * 2f;
         return hudX >= x0 && hudX <= x0 + barW && hudY >= y0 && hudY <= y0 + barH;
     }
-
 
     public void dispose() {
         uiFont.dispose();

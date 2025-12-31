@@ -25,6 +25,56 @@ public final class FilterEntity extends TileEntity {
     private boolean noneRight = false;
 
 
+    public static final int RULE_ANY  = -1;
+    public static final int RULE_NONE = -2;
+
+    // Store rules as ints: -1 Any, -2 None, >=0 ItemType ordinal
+    private int ruleForward = RULE_ANY;
+    private int ruleLeft    = RULE_ANY;
+    private int ruleRight   = RULE_ANY;
+
+    public enum Out { FORWARD, LEFT, RIGHT }
+
+    public int getRule(Out o) {
+        return switch (o) {
+            case FORWARD -> ruleForward;
+            case LEFT -> ruleLeft;
+            case RIGHT -> ruleRight;
+        };
+    }
+
+    public void setRule(Out o, int v) {
+        switch (o) {
+            case FORWARD -> ruleForward = v;
+            case LEFT -> ruleLeft = v;
+            case RIGHT -> ruleRight = v;
+        }
+    }
+
+    public void cycleRule(Out o, int delta) {
+        int cur = getRule(o);
+        setRule(o, cycle(cur, delta));
+    }
+
+    private static int cycle(int cur, int delta) {
+        // ring: 0=ANY, 1..N = ItemTypes, N+1=NONE
+        int n = ItemType.values().length;
+        int ring = n + 2;
+
+        int idx;
+        if (cur == RULE_ANY) idx = 0;
+        else if (cur == RULE_NONE) idx = n + 1;
+        else idx = 1 + cur;
+
+        idx = (idx + delta) % ring;
+        if (idx < 0) idx += ring;
+
+        if (idx == 0) return RULE_ANY;
+        if (idx == n + 1) return RULE_NONE;
+        return idx - 1; // ordinal
+    }
+
+
     public FilterEntity(int cellX, int cellY, int rot, Variant variant) {
         super(cellX, cellY, rot);
         this.variant = variant;
@@ -144,16 +194,17 @@ public final class FilterEntity extends TileEntity {
     public boolean outputsTo(Dir outEdge) {
         Dir travel = Dir.fromRot(rot);
 
-        if (outEdge == travel) return true; // forward always exists
+        boolean forward = (variant == Variant.FL || variant == Variant.FR);
+        boolean left    = (variant == Variant.FL || variant == Variant.LR);
+        boolean right   = (variant == Variant.FR || variant == Variant.LR);
 
-        boolean left  = (variant == Variant.FL || variant == Variant.LR);
-        boolean right = (variant == Variant.FR || variant == Variant.LR);
-
+        if (forward && outEdge == travel) return true;
         if (left && outEdge == travel.left()) return true;
         if (right && outEdge == travel.right()) return true;
 
         return false;
     }
+
 
     private void stepInputTowardDecision() {
         int[] c0 = rotUV(0, 2, rot);
@@ -239,10 +290,17 @@ public final class FilterEntity extends TileEntity {
     @Override
     public void writeSaveData(WorldGrid.TileSave out) {
         out.b0 = toggle;
+        out.i0 = ruleForward;
+        out.i1 = ruleLeft;
+        out.i2 = ruleRight;
     }
 
     @Override
     public void readSaveData(WorldGrid.TileSave in) {
         toggle = in.b0;
+        ruleForward = in.i0;
+        ruleLeft    = in.i1;
+        ruleRight   = in.i2;
     }
+
 }

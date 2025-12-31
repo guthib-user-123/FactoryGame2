@@ -405,10 +405,17 @@ public class Main extends ApplicationAdapter {
         doSelectionInput();
         doRotationInput();
 
-        boolean clickedHud = doHotbarMouseClick();
-        if (!clickedHud && !filterUiOpen) {
-            doGetPlacement();
+        boolean clickedHud = (!filterUiOpen) && doHotbarMouseClick();
+
+        if (filterUiOpen) {
+            handleFilterUiInput();   // NEW
+        } else if (!clickedHud) {
+            // Open config UI first; otherwise place/delete
+            if (!tryOpenFilterUI()) {
+                doGetPlacement();
+            }
         }
+
         tileWorld.update(dt)    ;
         money += tileWorld.consumeEarnedThisFrame();
 
@@ -422,6 +429,9 @@ public class Main extends ApplicationAdapter {
             drawDebugOverlay();
         }
         hud.draw(batch, money, tileWorld.itemCount(), hotbarPage, hotbarSlot, hotbarPages[hotbarPage], iconByTileId, whiteRegion);
+        if (filterUiOpen && editingFilter != null) {
+            hud.drawFilterPanel(batch, editingFilter, whiteRegion);
+        }
 
     }
 
@@ -522,6 +532,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private boolean tryOpenFilterUI() {
+        if (!hoverValid) return false; // <-- add this
         if (!Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) return false;
         if (!Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) && !Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT)) return false;
 
@@ -548,6 +559,49 @@ public class Main extends ApplicationAdapter {
         return tmpHud;
     }
 
+    private void closeFilterUI() {
+        filterUiOpen = false;
+        editingFilter = null;
+        filterCx = filterCy = -1;
+    }
+
+    private void handleFilterUiInput() {
+        if (editingFilter == null) { closeFilterUI(); return; }
+
+        // if tile got deleted / replaced, close
+        TileEntity teNow = tileWorld.getEntity(filterCx, filterCy);
+        if (teNow != editingFilter) { closeFilterUI(); return; }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            closeFilterUI();
+            return;
+        }
+
+        boolean l = Gdx.input.isButtonJustPressed(Input.Buttons.LEFT);
+        boolean r = Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT);
+        if (!l && !r) return;
+
+        Vector2 hm = getHudMouse();
+
+        // click outside panel closes (optional, but feels good)
+        if (!hud.isOverFilterPanel(hm.x, hm.y)) {
+            closeFilterUI();
+            return;
+        }
+
+        int hit = hud.filterButtonAt(hm.x, hm.y, editingFilter.getVariant());
+        if (hit == 99) { // close button
+            closeFilterUI();
+            return;
+        }
+        if (hit < 0) return;
+
+        int delta = r ? -1 : 1;
+
+        if (hit == 0) editingFilter.cycleRule(FilterEntity.Out.FORWARD, delta);
+        if (hit == 1) editingFilter.cycleRule(FilterEntity.Out.LEFT, delta);
+        if (hit == 2) editingFilter.cycleRule(FilterEntity.Out.RIGHT, delta);
+    }
 
     private void drawDebugOverlay() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
