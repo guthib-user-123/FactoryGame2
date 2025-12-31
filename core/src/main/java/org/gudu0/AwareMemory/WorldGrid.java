@@ -7,8 +7,8 @@ import com.badlogic.gdx.utils.Json;
 import java.util.ArrayList;
 
 public class WorldGrid {
-    public static final int GRID_W = 30;
-    public static final int GRID_H = 30;
+    public static int GRID_W = 30;
+    public static int GRID_H = 30;
     public static final int CELL = 32;
 
     public static final int TILE_EMPTY = 0;
@@ -69,9 +69,19 @@ public class WorldGrid {
         public boolean b0;
     }
 
-
-
     public WorldGrid() {
+        wCells = (GRID_W * 2);
+        hCells = (GRID_H * 2);
+        WORLD_W = wCells * CELL;
+        WORLD_H = hCells * CELL;
+
+
+        grid = new int[wCells][hCells];
+        rot  = new int[wCells][hCells];
+    }
+    public WorldGrid(int width, int height) {
+        GRID_W = width;
+        GRID_H = height;
         wCells = (GRID_W * 2);
         hCells = (GRID_H * 2);
         WORLD_W = wCells * CELL;
@@ -84,6 +94,38 @@ public class WorldGrid {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean inBoundsCell(int cx, int cy) {
         return cx >= 0 && cy >= 0 && cx < wCells && cy < hCells;
+    }
+
+    public String getTileName(int id){
+        String idToReturn = "TILE_EMPTY";
+        switch (id){
+            case 0: idToReturn = "TILE_EMPTY"; break;
+            case 1: idToReturn = "TILE_CONVEYOR"; break;
+            case 2: idToReturn = "TILE_SMELTER"; break;
+            case 3: idToReturn = "TILE_SELLPAD"; break;
+            case 4: idToReturn = "TILE_SPAWNER"; break;
+            case 5: idToReturn = "TILE_CRUSHER"; break;
+            case 6: idToReturn = "TILE_SPLITTER"; break;
+            case 7: idToReturn = "TILE_MERGER"; break;
+            case 8: idToReturn = "TILE_PRESS"; break;
+            case 9: idToReturn = "TILE_ROLLER"; break;
+            case 10: idToReturn = "TILE_FILTER_LR"; break;
+            case 11: idToReturn = "TILE_FILTER_FR"; break;
+            case 12: idToReturn = "TILE_FILTER_FL"; break;
+
+        }
+        return idToReturn;
+    }
+
+    public String getRotName(int direction){
+        String dirToReturn = "ERROR";
+        switch (direction){
+            case 0: dirToReturn = "RIGHT"; break;
+            case 1: dirToReturn = "DOWN"; break;
+            case 2: dirToReturn = "LEFT"; break;
+            case 3: dirToReturn = "UP"; break;
+        }
+        return dirToReturn;
     }
 
     public void saveWithTileWorld(String name, TileWorld tileWorld) {
