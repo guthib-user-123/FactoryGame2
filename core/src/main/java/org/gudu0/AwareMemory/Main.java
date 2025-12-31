@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -40,6 +41,12 @@ public class Main extends ApplicationAdapter {
     private Viewport viewport;
     private SpriteBatch batch;
     private float money = 1000000.0f;
+
+    private OrthographicCamera hudCamera;
+    private Viewport hudViewport;
+    private final Vector2 tmpHud = new Vector2();
+
+
 
     private static final float COST_CONVEYOR = 1f;
     private static final float COST_SMELTER  = 15f;
@@ -172,6 +179,11 @@ public class Main extends ApplicationAdapter {
         camera = new OrthographicCamera();
         viewport = new FitViewport(1920, 1080, camera);
         viewport.apply(true);
+
+        hudCamera = new OrthographicCamera();
+        hudViewport = new FitViewport(1920f, 1080f, hudCamera);
+        hudViewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+
 
         camera.position.set(world.WORLD_W / 2f, world.WORLD_H / 2f, 0f);
         camera.update();
@@ -379,8 +391,10 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        viewport.update(width, height, true);      // world
+        hudViewport.update(width, height, true);   // HUD
     }
+
 
     @Override
     public void dispose() {
@@ -458,12 +472,12 @@ public class Main extends ApplicationAdapter {
         return new TextureRegion(t);
     }
 
-    private float hudX() {
-        return Gdx.input.getX() * (1920f / (float)Gdx.graphics.getWidth());
+    private Vector2 getHudMouse() {
+        tmpHud.set(Gdx.input.getX(), Gdx.input.getY());
+        hudViewport.unproject(tmpHud); // handles letterboxing + y flip correctly
+        return tmpHud;
     }
-    private float hudY() {
-        return (Gdx.graphics.getHeight() - Gdx.input.getY()) * (1080f / (float)Gdx.graphics.getHeight());
-    }
+
 
     private void drawDebugOverlay() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -734,7 +748,9 @@ public class Main extends ApplicationAdapter {
     private boolean doHotbarMouseClick() {
         if (!Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) return false;
 
-        int slot = hud.slotAt(hudX(), hudY());
+        Vector2 hm = getHudMouse();
+        int slot = hud.slotAt(hm.x, hm.y);
+
         if (slot < 0) return false;
 
         hotbarSlot = slot;
@@ -953,7 +969,9 @@ public class Main extends ApplicationAdapter {
     }
 
     public void doGetPlacement() {
-        if (hud.isOverHotbar(hudX(), hudY())) return;
+        Vector2 hm = getHudMouse();
+        if (hud.isOverHotbar(hm.x, hm.y)) return;
+
         if (!hoverValid) return;
         if (player.blocksCell(world, hoverCellX, hoverCellY)) { return; }
 
