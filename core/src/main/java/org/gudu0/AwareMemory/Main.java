@@ -356,7 +356,11 @@ public class Main extends ApplicationAdapter {
 
         doSelectionInput();
         doRotationInput();
-        doGetPlacement();
+
+        boolean clickedHud = doHotbarMouseClick();
+        if (!clickedHud) {
+            doGetPlacement();
+        }
         tileWorld.update(dt)    ;
         money += tileWorld.consumeEarnedThisFrame();
 
@@ -454,7 +458,12 @@ public class Main extends ApplicationAdapter {
         return new TextureRegion(t);
     }
 
-
+    private float hudX() {
+        return Gdx.input.getX() * (1920f / (float)Gdx.graphics.getWidth());
+    }
+    private float hudY() {
+        return (Gdx.graphics.getHeight() - Gdx.input.getY()) * (1080f / (float)Gdx.graphics.getHeight());
+    }
 
     private void drawDebugOverlay() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -546,12 +555,6 @@ public class Main extends ApplicationAdapter {
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             debugOverlay = !debugOverlay;
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.EQUALS)){
-            camera.zoom -= 0.05f;
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.MINUS)){
-            camera.zoom += 0.05f;
         }
     }
 
@@ -727,6 +730,18 @@ public class Main extends ApplicationAdapter {
             scrollDelta = 0; // consume event
         }
     }
+
+    private boolean doHotbarMouseClick() {
+        if (!Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) return false;
+
+        int slot = hud.slotAt(hudX(), hudY());
+        if (slot < 0) return false;
+
+        hotbarSlot = slot;
+        applyHotbarSelection(); // your existing method :contentReference[oaicite:5]{index=5}
+        return true;
+    }
+
 
     private void selectSlot(int slot) {
         hotbarSlot = slot;
@@ -938,6 +953,7 @@ public class Main extends ApplicationAdapter {
     }
 
     public void doGetPlacement() {
+        if (hud.isOverHotbar(hudX(), hudY())) return;
         if (!hoverValid) return;
         if (player.blocksCell(world, hoverCellX, hoverCellY)) { return; }
 

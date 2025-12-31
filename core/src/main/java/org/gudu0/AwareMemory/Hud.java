@@ -82,6 +82,31 @@ public class Hud {
         smallFont.draw(batch, Integer.toString(variant), drawX + 4f, drawY + WorldGrid.CELL - 4f);
     }
 
+    // Returns -1 if not over any slot, else 0..9
+    public int slotAt(float hudX, float hudY) {
+        float barH = slotSize + pad * 2f;
+        if (hudX < x0 || hudX > x0 + barW) return -1;
+        if (hudY < y0 || hudY > y0 + barH) return -1;
+
+        float slotsY = y0 + pad;
+        if (hudY < slotsY || hudY > slotsY + slotSize) return -1;
+
+        for (int i = 0; i < 10; i++) {
+            float sx = x0 + pad + i * (slotSize + pad);
+            float sy = slotsY;
+            if (hudX >= sx && hudX <= sx + slotSize && hudY >= sy && hudY <= sy + slotSize) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public boolean isOverHotbar(float hudX, float hudY) {
+        float barH = slotSize + pad * 2f;
+        return hudX >= x0 && hudX <= x0 + barW && hudY >= y0 && hudY <= y0 + barH;
+    }
+
+
     public void dispose() {
         uiFont.dispose();
     }
