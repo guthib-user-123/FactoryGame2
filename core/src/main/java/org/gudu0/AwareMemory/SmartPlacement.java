@@ -269,8 +269,14 @@ public final class SmartPlacement {
     }
 
     /**
-     * True if we can output from (x,y) into the neighbor in direction outDir.
-     * This only checks the neighbor's acceptance rules (not occupancy).
+     * SmartPlacement output check:
+     * Returns true if we COULD output into that side after the player extends the line.
+     *
+     * - Empty cell => true (potential outlet)
+     * - Existing entity => must accept from our side
+     * - Out of bounds => false
+     *
+     * This is intentionally more permissive than "actually connected right now".
      */
     private static boolean canOutputTo(TileWorld world, WorldGrid grid, int x, int y, Dir outDir) {
         int nx = x + outDir.dx;
@@ -278,11 +284,36 @@ public final class SmartPlacement {
 
         if (!grid.inBoundsCell(nx, ny)) return false;
 
-        var neighbor = world.getEntity(nx, ny);
-        if (neighbor == null) return false;
+        TileEntity neighbor = world.getEntity(nx, ny);
+
+        // IMPORTANT: empty space is still a valid *potential* output for SmartPlacement
+        if (neighbor == null) return true;
 
         return neighbor.acceptsFrom(outDir.opposite());
     }
+
+    /**
+     * For MERGER upgrade only:
+     * Forward outlet is considered "ok" if:
+     * - in bounds, and
+     * - either the forward cell is empty (player can extend later),
+     *   OR there is a neighbor that currently accepts from us.
+     *
+     * We intentionally do NOT use this relaxed rule for splitter outputs,
+     * otherwise empty space makes splitters appear possible everywhere.
+     */
+    private static boolean mergerForwardOutletOk(TileWorld world, WorldGrid grid, int x, int y, Dir forwardOut) {
+        int nx = x + forwardOut.dx;
+        int ny = y + forwardOut.dy;
+
+        if (!grid.inBoundsCell(nx, ny)) return false;
+
+        TileEntity neighbor = world.getEntity(nx, ny);
+        if (neighbor == null) return true; // empty space is a potential outlet
+
+        return neighbor.acceptsFrom(forwardOut.opposite());
+    }
+
 
     private static boolean refreshAllAutoTiles(TileWorld world, WorldGrid grid) {
         boolean changedAny = false;

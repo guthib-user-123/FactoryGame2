@@ -38,6 +38,7 @@ public final class AutoPlacementTest {
         // Confirmed Visually
     }
 
+    //fails
     @Test
     public void upgradesToSplitter_whenLeftAndRightOutputsAvailable_setsVariantLR() {
         TestHarness h = new TestHarness();
@@ -56,6 +57,7 @@ public final class AutoPlacementTest {
         // Confirmed visually
     }
 
+    //fails
     @Test
     public void upgradesToSplitter_whenForwardAndLeftAvailable_setsVariantFL() {
         TestHarness h = new TestHarness();
@@ -73,7 +75,9 @@ public final class AutoPlacementTest {
         // Confirmed Visually
     }
 
-    @Test void becomesTurnCorrectly(){
+    //fails
+    @Test
+    public void becomesTurnCorrectly(){
         TestHarness h = new TestHarness();
         int cx = 2, cy = 2;
 
@@ -86,7 +90,6 @@ public final class AutoPlacementTest {
 
         h.assertConveyorShape(ConveyorEntity.Shape.TURN_RIGHT, cx + 1, cy);
         // last conveyor should now be a turn.
-
 
     }
 
@@ -109,7 +112,7 @@ public final class AutoPlacementTest {
         h.assertConveyorShape(ConveyorEntity.Shape.TURN_RIGHT, cx + 1, cy);
     }
 
-
+    //fails
     @Test
     public void turnConvertsToMergeCorrectly(){
         TestHarness h = new TestHarness();
@@ -133,6 +136,7 @@ public final class AutoPlacementTest {
         // Should have converted to merger.
     }
 
+    //fails with new canOutputTo method
     @Test
     public void conveyorUpgradesToMergerWhenPossible(){
         TestHarness h = new TestHarness();
@@ -161,6 +165,7 @@ public final class AutoPlacementTest {
         // The conveyor on 3,2 should have become a merger because: input from side (back, W), input from side (left, N), output to side (front, E).
     }
 
+    //fails with new canOutputMethod
     @Test
     public void deletingConveyorMakesITgoBackToConveyorCorrectly(){
         TestHarness h = new TestHarness();
@@ -197,6 +202,7 @@ public final class AutoPlacementTest {
         // Should have converted back to a straight conveyor, because there is no extra input now.
     }
 
+    // fails with new canOutput Method
     @Test
     public void mergerDowngradesToConveyorWhenSecondInputRemoved() {
         TestHarness h = new TestHarness();
@@ -215,6 +221,7 @@ public final class AutoPlacementTest {
         h.assertTile(TILE_CONVEYOR, cx + 1, cy, E);
     }
 
+    //fails
     @Test
     public void upgradesToSplitter_whenForwardAndRightAvailable_setsVariantFR() {
         TestHarness h = new TestHarness();

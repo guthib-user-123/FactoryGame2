@@ -1130,10 +1130,7 @@ public class Main extends ApplicationAdapter {
                     int upgraded = tileWorld.decideAutoTileForConveyor(hoverCellX, hoverCellY, selectedRot);
                     world.grid[hoverCellX][hoverCellY] = upgraded;
                 }
-
                 tileWorld.rebuildEntityAt(hoverCellX, hoverCellY);
-//                tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
-
             }
         }
 
@@ -1145,8 +1142,6 @@ public class Main extends ApplicationAdapter {
             }
             world.grid[hoverCellX][hoverCellY] = WorldGrid.TILE_EMPTY;
             tileWorld.clearEntityAt(hoverCellX, hoverCellY);
-//            tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
-
         }
 
     }
