@@ -1,6 +1,7 @@
 package org.gudu0.AwareMemory;
 
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
+import org.gudu0.AwareMemory.entities.MergerEntity;
 import org.gudu0.AwareMemory.entities.SplitterEntity;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,7 +19,7 @@ public final class TestHarness {
     public void delete(int cx, int cy) {
         world.grid[cx][cy] = WorldGrid.TILE_EMPTY;
         tileWorld.clearEntityAt(cx, cy);
-        tileWorld.refreshAutoTilesNear(cx, cy);
+//        tileWorld.refreshAutoTilesNear(cx, cy);
 
     }
 
@@ -34,7 +35,7 @@ public final class TestHarness {
         }
 
         tileWorld.rebuildEntityAt(cx, cy);
-        tileWorld.refreshAutoTilesNear(cx, cy);
+//        tileWorld.refreshAutoTilesNear(cx, cy);
     }
 
     // ---- Assertions ----
@@ -82,8 +83,22 @@ public final class TestHarness {
             () -> "Splitter variant mismatch @(" + cx + "," + cy + ")\n"
                 + "Expected: " + expected + "\n"
                 + "Got:      " + s.getVariant() + "\n\n" + dump(true, true));
-//        System.out.println(dump(true, true));
     }
+
+    public void assertMergerVariant(MergerEntity.Variant expected, int cx, int cy) {
+        TileEntity te = tileWorld.getEntity(cx, cy);
+        //noinspection SimplifiableAssertion
+        assertTrue(te instanceof MergerEntity,
+            () -> "Expected MergerEntity @(" + cx + "," + cy + "), got: " + (te == null ? "null" : te.getClass().getSimpleName())
+                + "\n\n" + dump(true, true));
+
+        MergerEntity s = (MergerEntity) te;
+        assertEquals(expected, s.getVariant(),
+            () -> "Merger variant mismatch @(" + cx + "," + cy + ")\n"
+                + "Expected: " + expected + "\n"
+                + "Got:      " + s.getVariant() + "\n\n" + dump(true, true));
+    }
+
 
     public void assertConveyorShape(ConveyorEntity.Shape expected, int cx, int cy) {
         TileEntity te = tileWorld.getEntity(cx, cy);

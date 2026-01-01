@@ -1,10 +1,12 @@
 package org.gudu0.AwareMemory;
 
-import  org.gudu0.AwareMemory.entities.*;
+import org.gudu0.AwareMemory.entities.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 @SuppressWarnings({"PatternVariableCanBeUsed", "EnhancedSwitchMigration"})
 public final class TileWorld {
@@ -13,7 +15,9 @@ public final class TileWorld {
     private final WorldGrid world;
     private final TileEntity[][] entities;
 
-    public float fixedDt() { return FIXED_TICK; }
+    public float fixedDt() {
+        return FIXED_TICK;
+    }
 
     private float acc = 0f;
     private int tick = 0;
@@ -35,116 +39,6 @@ public final class TileWorld {
         return entities[cx][cy];
     }
 
-    public Item getItem(int id) { return items.get(id); }
-
-    public void deleteItem(int id) { items.remove(id); }
-
-    public int itemCount() { return items.size(); }
-
-    public void addEarned(float amount) { earnedThisFrame += amount; }
-
-    public Item createItem(ItemType type, float value) {
-        Item it = new Item(nextItemId++, type, value);
-        items.put(it.id, it);
-        return it;
-    }
-
-    public WorldGrid.TileSave[] exportTileSaves() {
-        ArrayList<WorldGrid.TileSave> out = new ArrayList<>();
-
-        for (int y = 0; y < world.hCells; y++) {
-            for (int x = 0; x < world.wCells; x++) {
-                TileEntity te = entities[x][y];
-                if (te == null) continue;
-
-                WorldGrid.TileSave ts = new WorldGrid.TileSave();
-                ts.cx = x;
-                ts.cy = y;
-
-                te.writeSaveData(ts);
-                out.add(ts);
-            }
-        }
-        return out.toArray(new WorldGrid.TileSave[0]);
-    }
-
-    public ArrayList<WorldGrid.ItemSave> exportItemSaves() {
-        ArrayList<WorldGrid.ItemSave> out = new ArrayList<>();
-
-        for (int y = 0; y < world.hCells; y++) {
-            for (int x = 0; x < world.wCells; x++) {
-                TileEntity te = entities[x][y];
-                if (te == null) continue;
-
-                for (int u = 0; u < TileEntity.N; u++) {
-                    for (int v = 0; v < TileEntity.N; v++) {
-                        int id = te.occ[u][v];
-                        if (id == TileEntity.EMPTY) continue;
-
-                        Item it = items.get(id);
-                        if (it == null) continue;
-
-                        WorldGrid.ItemSave s = new WorldGrid.ItemSave();
-                        s.id = it.id;
-                        s.type = it.type.name();
-                        s.value = it.value;
-                        s.cx = x; s.cy = y;
-                        s.u = u; s.v = v;
-                        out.add(s);
-                    }
-                }
-            }
-        }
-        return out;
-    }
-
-    public void importItemSaves(WorldGrid.ItemSave[] itemsFromSave, int nextIdFromSave) {
-        // Clear runtime items + occupancy
-        items.clear();
-        for (int y = 0; y < world.hCells; y++) {
-            for (int x = 0; x < world.wCells; x++) {
-                TileEntity te = entities[x][y];
-                if (te == null) continue;
-                for (int u = 0; u < TileEntity.N; u++) {
-                    for (int v = 0; v < TileEntity.N; v++) {
-                        te.occ[u][v] = TileEntity.EMPTY;
-                    }
-                }
-            }
-        }
-
-        int maxId = 0;
-
-        if (itemsFromSave != null) {
-            for (WorldGrid.ItemSave s : itemsFromSave) {
-                if (s == null) continue;
-                if (!world.inBoundsCell(s.cx, s.cy)) continue;
-                if (s.u < 0 || s.u >= TileEntity.N || s.v < 0 || s.v >= TileEntity.N) continue;
-
-                TileEntity te = entities[s.cx][s.cy];
-                if (te == null) continue;
-                if (te.occ[s.u][s.v] != TileEntity.EMPTY) continue;
-
-                ItemType type;
-                try {
-                    type = ItemType.valueOf(s.type);
-                } catch (Exception e) {
-                    continue;
-                }
-
-                Item it = new Item(s.id, type, s.value);
-                items.put(it.id, it);
-                te.occ[s.u][s.v] = it.id;
-
-                if (it.id > maxId) maxId = it.id;
-            }
-        }
-
-        int candidate = nextIdFromSave;
-        if (candidate <= 0 || candidate <= maxId) candidate = maxId + 1;
-        nextItemId = candidate;
-    }
-
     public void importTileSaves(WorldGrid.TileSave[] saves) {
         if (saves == null) return;
 
@@ -158,44 +52,19 @@ public final class TileWorld {
         }
     }
 
-    public int exportNextItemId() { return nextItemId; }
 
-    private void refreshSplitterVariantAt(int cx, int cy) {
-        if (!(getEntity(cx, cy) instanceof SplitterEntity)) return;
-        SplitterEntity s = (SplitterEntity) getEntity(cx, cy);
-
-        assert s != null;
-        Dir travel = Dir.fromRot(s.rot);
-
-        // Check which output neighbors *exist and accept from our side*
-        //noinspection unused
-        boolean fOk = canOutputTo(cx, cy, travel);
-        boolean lOk = canOutputTo(cx, cy, travel.left());
-        boolean rOk = canOutputTo(cx, cy, travel.right());
-
-        // You said you don't care about priority; just pick a variant that matches what's valid.
-        // If both sides valid -> LR
-        // If only left valid -> FL
-        // If only right valid -> FR
-        // If neither valid -> keep current (or default to FL/FR/LR; your choice)
-        if (lOk && rOk) s.setVariant(SplitterEntity.Variant.LR);
-        else if (fOk && lOk) s.setVariant(SplitterEntity.Variant.FL);
-        else if (fOk && rOk) s.setVariant(SplitterEntity.Variant.FR);
-// else: leave it alone (or default)
-
-
-        // else leave it alone (no good outputs)
-    }
-
-    public float consumeEarnedThisFrame() {
-        float e = earnedThisFrame;
-        earnedThisFrame = 0f;
-        return e;
-    }
-
-    // Called when placing a tile
+    // Called by placement code (normal path)
     public void rebuildEntityAt(int cx, int cy) {
-        // Destroy old entity + its items (delete rule)
+        rebuildEntityAtInternal(cx, cy, true);
+    }
+
+    // Called by SmartPlacement only (no recursion)
+    void rebuildEntityAtFromSmartPlacement(int cx, int cy) {
+        rebuildEntityAtInternal(cx, cy, false);
+    }
+
+    private void rebuildEntityAtInternal(int cx, int cy, boolean runSmartPlacement) {
+        // Destroy old entity + its items (your current rule)
         TileEntity old = entities[cx][cy];
         if (old != null) old.destroyContainedItems(this);
 
@@ -207,6 +76,12 @@ public final class TileWorld {
             case WorldGrid.TILE_CONVEYOR:
                 created = new ConveyorEntity(cx, cy, rot);
                 break;
+            case WorldGrid.TILE_SPLITTER:
+                created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.FL);
+                break; // temp default
+            case WorldGrid.TILE_MERGER:
+                created = new MergerEntity(cx, cy, rot, MergerEntity.Variant.BL);
+                break;     // temp default
             case WorldGrid.TILE_SELLPAD:
                 created = new SellpadEntity(cx, cy, rot);
                 break;
@@ -218,12 +93,6 @@ public final class TileWorld {
                 break;
             case WorldGrid.TILE_SMELTER:
                 created = new SmelterEntity(cx, cy, rot);
-                break;
-            case WorldGrid.TILE_SPLITTER:
-                created = new SplitterEntity(cx, cy, rot, SplitterEntity.Variant.FL); // temp default
-                break;
-            case WorldGrid.TILE_MERGER:
-                created = new MergerEntity(cx, cy, rot);
                 break;
             case WorldGrid.TILE_PRESS:
                 created = new PressEntity(cx, cy, rot);
@@ -244,20 +113,28 @@ public final class TileWorld {
                 created = null;
                 break;
         }
+
         entities[cx][cy] = created;
-        // NEW: update conveyor shapes around this tile
-        refreshConveyorsNear(cx, cy);
-        refreshSplittersNear(cx, cy);
+
+        if (runSmartPlacement) {
+            SmartPlacement.refreshAll(this);
+        }
     }
 
-    // Called when deleting a tile (or setting to EMPTY)
-    public void clearEntityAt(int cx, int cy) {
+    private void clearEntityAtInternal(int cx, int cy, boolean runSmartPlacement){
         TileEntity old = entities[cx][cy];
         if (old != null) old.destroyContainedItems(this);
         entities[cx][cy] = null;
-        // NEW: update conveyor shapes around this tile
-        refreshConveyorsNear(cx, cy);
-        refreshSplittersNear(cx, cy);
+
+        if (runSmartPlacement) SmartPlacement.refreshAll(this);
+    }
+
+    public void clearEntityAt(int cx, int cy){
+        clearEntityAtInternal(cx, cy, true);
+    }
+
+    public void clearEntityAtFromSmartPlacement(int cx, int cy){
+        clearEntityAtInternal(cx, cy, false);
     }
 
     public void refreshAllConveyorShapes() {
@@ -266,16 +143,6 @@ public final class TileWorld {
                 refreshConveyorShapeAt(x, y);
             }
         }
-    }
-
-    // Spawn into a specific tile’s entry, if valid
-    public void spawnOnTile(int cx, int cy, ItemType type, float value, Dir fromEdge) {
-        TileEntity te = getEntity(cx, cy);
-        if (te == null) return;
-        Item it = new Item(nextItemId++, type, value);
-        if (!te.canAccept(it, fromEdge)) return;
-        items.put(it.id, it);
-        te.accept(it, fromEdge, tick);
     }
 
     public void update(float dt) {
@@ -308,27 +175,6 @@ public final class TileWorld {
         return cellY * WorldGrid.CELL + (v + 0.5f) * sub;
     }
 
-    // Expose occupancy for drawing:
-    public Iterable<ItemRenderInfo> renderInfos() {
-        // Simple: walk entities, emit each occupied cell. Not optimized, but fine to start.
-        java.util.ArrayList<ItemRenderInfo> out = new java.util.ArrayList<>();
-        for (int y = 0; y < world.hCells; y++) {
-            for (int x = 0; x < world.wCells; x++) {
-                TileEntity te = entities[x][y];
-                if (te == null) continue;
-                for (int u = 0; u < 5; u++) {
-                    for (int v = 0; v < 5; v++) {
-                        int id = te.occ[u][v];
-                        if (id == TileEntity.EMPTY) continue;
-                        Item it = items.get (id);
-                        if (it == null) continue;
-                        out.add(new ItemRenderInfo(it, subcellCenterX(x, u), subcellCenterY(y, v)));
-                    }
-                }
-            }
-        }
-        return out;
-    }
     private void refreshConveyorShapeAt(int cx, int cy) {
         if (!(getEntity(cx, cy) instanceof ConveyorEntity)) return;
         ConveyorEntity c = (ConveyorEntity) getEntity(cx, cy);
@@ -402,46 +248,6 @@ public final class TileWorld {
         return n.acceptsFrom(out.opposite());
     }
 
-    private void refreshConveyorsNear(int cx, int cy) {
-        // refresh self + 4 neighbors is usually enough
-        int[][] d = {{0,0},{1,0},{-1,0},{0,1},{0,-1}};
-        for (int[] o : d) refreshConveyorShapeAt(cx + o[0], cy + o[1]);
-    }
-
-    private void refreshSplittersNear(int cx, int cy) {
-        int[][] d = {{0,0},{1,0},{-1,0},{0,1},{0,-1}};
-        for (int[] o : d) refreshSplitterVariantAt(cx + o[0], cy + o[1]);
-    }
-
-    private boolean maybeAutoRotateConveyor(int x, int y) {
-        if (world.grid[x][y] != WorldGrid.TILE_CONVEYOR) return false;
-
-        TileEntity te = getEntity(x, y);
-//        if (te != null && te.hasAnyItems()) return false; // implement this helper // I don't mind if it has items
-
-        Dir curOut = Dir.fromRot(world.rot[x][y]);
-
-        // if current output works, keep it (stability)
-        if (canOutputTo(x, y, curOut)) return false;
-
-        Dir only = null;
-        int count = 0;
-        for (Dir d : Dir.CARDINALS) { // E,S,W,N
-            if (canOutputTo(x, y, d)) {
-                only = d;
-                count++;
-                if (count > 1) return false; // ambiguous: do nothing
-            }
-        }
-
-        if (count == 1) {
-            world.rot[x][y] = only.toRot();
-            return true;
-        }
-        return false;
-    }
-
-
     // Decide if a conveyor should be upgraded into a splitter based on available outputs.
     public int decideAutoTileForConveyor(int cx, int cy, int outRot) {
         Dir out = Dir.fromRot(outRot);
@@ -471,59 +277,152 @@ public final class TileWorld {
         return WorldGrid.TILE_CONVEYOR;
     }
 
-    // TileWorld.java
-    public void refreshAutoTilesNear(int cx, int cy) {
-        java.util.ArrayDeque<int[]> q = new java.util.ArrayDeque<>();
-        boolean[][] inQ = new boolean[world.wCells][world.hCells];
-
-        java.util.function.BiConsumer<Integer, Integer> enqueue = (x, y) -> {
-            if (!world.inBoundsCell(x, y)) return;
-            if (inQ[x][y]) return;
-            inQ[x][y] = true;
-            q.add(new int[]{x, y});
-        };
-
-        // seed: changed cell + 4-neighborhood
-        enqueue.accept(cx, cy);
-        enqueue.accept(cx + 1, cy);
-        enqueue.accept(cx - 1, cy);
-        enqueue.accept(cx, cy + 1);
-        enqueue.accept(cx, cy - 1);
-
-        while (!q.isEmpty()) {
-            int[] p = q.removeFirst();
-            int x = p[0], y = p[1];
-            inQ[x][y] = false;
-
-            int id = world.grid[x][y];
-
-            // Only these are auto-managed.
-            if (id != WorldGrid.TILE_CONVEYOR
-                && id != WorldGrid.TILE_SPLITTER
-                && id != WorldGrid.TILE_MERGER) {
-                continue;
-            }
-
-            int rot = world.rot[x][y];
-            int desired = decideAutoTileForConveyor(x, y, rot);
-
-            if (desired == id) continue;
-
-            // Apply change and rebuild entity so neighbor checks see correct behavior.
-            world.grid[x][y] = desired;
-            rebuildEntityAt(x, y);
-
-            // any change might affect neighbors' eligibility -> recheck neighborhood
-            enqueue.accept(x + 1, y);
-            enqueue.accept(x - 1, y);
-            enqueue.accept(x, y + 1);
-            enqueue.accept(x, y - 1);
-            enqueue.accept(x, y); // recheck self too (cheap safety)
-        }
+    public WorldGrid worldGrid() {
+        return world;
     }
 
 
 
+
+
+    public void addEarned(float amount) { earnedThisFrame += amount; }
+    public float consumeEarnedThisFrame() {
+        float e = earnedThisFrame;
+        earnedThisFrame = 0f;
+        return e;
+    }
+    public int exportNextItemId() { return nextItemId; }
+    public Item getItem(int id) { return items.get(id); }
+    public void deleteItem(int id) { items.remove(id); }
+    public int itemCount() { return items.size(); }
+    public void importItemSaves(WorldGrid.ItemSave[] itemsFromSave, int nextIdFromSave) {
+        // Clear runtime items + occupancy
+        items.clear();
+        for (int y = 0; y < world.hCells; y++) {
+            for (int x = 0; x < world.wCells; x++) {
+                TileEntity te = entities[x][y];
+                if (te == null) continue;
+                for (int u = 0; u < TileEntity.N; u++) {
+                    for (int v = 0; v < TileEntity.N; v++) {
+                        te.occ[u][v] = TileEntity.EMPTY;
+                    }
+                }
+            }
+        }
+
+        int maxId = 0;
+
+        if (itemsFromSave != null) {
+            for (WorldGrid.ItemSave s : itemsFromSave) {
+                if (s == null) continue;
+                if (!world.inBoundsCell(s.cx, s.cy)) continue;
+                if (s.u < 0 || s.u >= TileEntity.N || s.v < 0 || s.v >= TileEntity.N) continue;
+
+                TileEntity te = entities[s.cx][s.cy];
+                if (te == null) continue;
+                if (te.occ[s.u][s.v] != TileEntity.EMPTY) continue;
+
+                ItemType type;
+                try {
+                    type = ItemType.valueOf(s.type);
+                } catch (Exception e) {
+                    continue;
+                }
+
+                Item it = new Item(s.id, type, s.value);
+                items.put(it.id, it);
+                te.occ[s.u][s.v] = it.id;
+
+                if (it.id > maxId) maxId = it.id;
+            }
+        }
+
+        int candidate = nextIdFromSave;
+        if (candidate <= 0 || candidate <= maxId) candidate = maxId + 1;
+        nextItemId = candidate;
+    }
+    public Item createItem(ItemType type, float value) {
+        Item it = new Item(nextItemId++, type, value);
+        items.put(it.id, it);
+        return it;
+    }
+    // Spawn into a specific tile’s entry, if valid
+    public void spawnOnTile(int cx, int cy, ItemType type, float value, Dir fromEdge) {
+        TileEntity te = getEntity(cx, cy);
+        if (te == null) return;
+        Item it = new Item(nextItemId++, type, value);
+        if (!te.canAccept(it, fromEdge)) return;
+        items.put(it.id, it);
+        te.accept(it, fromEdge, tick);
+    }
+    public WorldGrid.TileSave[] exportTileSaves() {
+        ArrayList<WorldGrid.TileSave> out = new ArrayList<>();
+
+        for (int y = 0; y < world.hCells; y++) {
+            for (int x = 0; x < world.wCells; x++) {
+                TileEntity te = entities[x][y];
+                if (te == null) continue;
+
+                WorldGrid.TileSave ts = new WorldGrid.TileSave();
+                ts.cx = x;
+                ts.cy = y;
+
+                te.writeSaveData(ts);
+                out.add(ts);
+            }
+        }
+        return out.toArray(new WorldGrid.TileSave[0]);
+    }
+    // Expose occupancy for drawing:
+    public Iterable<ItemRenderInfo> renderInfos() {
+        // Simple: walk entities, emit each occupied cell. Not optimized, but fine to start.
+        java.util.ArrayList<ItemRenderInfo> out = new java.util.ArrayList<>();
+        for (int y = 0; y < world.hCells; y++) {
+            for (int x = 0; x < world.wCells; x++) {
+                TileEntity te = entities[x][y];
+                if (te == null) continue;
+                for (int u = 0; u < 5; u++) {
+                    for (int v = 0; v < 5; v++) {
+                        int id = te.occ[u][v];
+                        if (id == TileEntity.EMPTY) continue;
+                        Item it = items.get (id);
+                        if (it == null) continue;
+                        out.add(new ItemRenderInfo(it, subcellCenterX(x, u), subcellCenterY(y, v)));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+    public ArrayList<WorldGrid.ItemSave> exportItemSaves() {
+        ArrayList<WorldGrid.ItemSave> out = new ArrayList<>();
+
+        for (int y = 0; y < world.hCells; y++) {
+            for (int x = 0; x < world.wCells; x++) {
+                TileEntity te = entities[x][y];
+                if (te == null) continue;
+
+                for (int u = 0; u < TileEntity.N; u++) {
+                    for (int v = 0; v < TileEntity.N; v++) {
+                        int id = te.occ[u][v];
+                        if (id == TileEntity.EMPTY) continue;
+
+                        Item it = items.get(id);
+                        if (it == null) continue;
+
+                        WorldGrid.ItemSave s = new WorldGrid.ItemSave();
+                        s.id = it.id;
+                        s.type = it.type.name();
+                        s.value = it.value;
+                        s.cx = x; s.cy = y;
+                        s.u = u; s.v = v;
+                        out.add(s);
+                    }
+                }
+            }
+        }
+        return out;
+    }
     @SuppressWarnings("ClassCanBeRecord")
     public static final class ItemRenderInfo {
         private final Item item;

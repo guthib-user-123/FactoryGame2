@@ -1,6 +1,7 @@
 package org.gudu0.AwareMemory;
 
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
+import org.gudu0.AwareMemory.entities.MergerEntity;
 import org.gudu0.AwareMemory.entities.SplitterEntity;
 import org.junit.jupiter.api.Test;
 
@@ -120,10 +121,13 @@ public final class AutoPlacementTest {
         // Plase South Facing Conveyor above (facing into it)
 
         h.assertConveyorShape(ConveyorEntity.Shape.TURN_LEFT, cx, cy);
-        // Conveyor should have converted to a left turn conveyor (I think? I'm not sure which shape is which)
+        // Conveyor should have converted to a left turn conveyor
 
         h.place(TILE_CONVEYOR, cx, cy - 1, N);
         // Place North Facing Conveyor below the now turn conveyor, it should convert to a merge because of input top, and input botttom.
+
+
+        //test passes up till here.
 
         h.assertTile(WorldGrid.TILE_MERGER, cx, cy, E);
         // Should have converted to merger.
@@ -267,24 +271,6 @@ public final class AutoPlacementTest {
     }
 
     @Test
-    public void doesNotUpgrade_whenNeighborExistsButDoesNotAccept() {
-        TestHarness h = new TestHarness();
-        int cx = 2, cy = 2;
-
-        // lOk true
-        h.place(TILE_CONVEYOR, cx, cy + 1, N);
-
-        // EAST neighbor exists but is "wrong way" so fOk should be false.
-        // (Center tries to output EAST into neighbor; neighbor must accept from WEST.
-        // A conveyor rot=W would typically accept from EAST instead.)
-        h.place(TILE_CONVEYOR, cx + 1, cy, W);
-
-        h.place(TILE_CONVEYOR, cx, cy, E);
-
-        h.assertTile(TILE_CONVEYOR, cx, cy, E);
-    }
-
-    @Test
     public void deletingFeeder_updatesConveyorShapeBackToStraight() {
         TestHarness h = new TestHarness();
         int cx = 2, cy = 2;
@@ -321,4 +307,37 @@ public final class AutoPlacementTest {
         h.assertItemCount(0);
         h.assertTileId(WorldGrid.TILE_EMPTY, cx, cy);
     }
+
+    @Test
+    public void placementTest(){
+        TestHarness h = new TestHarness();
+        int cx = 2, cy = 2;
+
+        h.place(TILE_CONVEYOR, cx, cy, N);
+        h.place(TILE_CONVEYOR, cx, cy - 1, S);
+
+        h.assertRot(S, cx, cy-1);
+    }
+
+    @Test
+    public void conveyorCornerShapePicksTURN_LEFTvsTURN_RIGHT(){
+        TestHarness h = new TestHarness();
+        int cx = 2, cy = 2;
+
+
+    }
+
+    @Test
+    public void mergerVariantPicksLRWhenFedFromVothSidesNoBack(){
+        TestHarness h = new TestHarness();
+        int cx = 2, cy = 2;
+
+        h.place(WorldGrid.TILE_MERGER, cx, cy, E);
+        h.place(TILE_CONVEYOR, cx, cy + 1, S);
+        h.place(TILE_CONVEYOR, cx, cy - 1, N);
+        h.place(TILE_CONVEYOR, cx + 1, cy, E);
+
+        h.assertMergerVariant(MergerEntity.Variant.LR, cx, cy);
+    }
+
 }

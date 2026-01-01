@@ -143,16 +143,17 @@ public final class SplitterEntity extends TileEntity {
     public boolean outputsTo(Dir outEdge) {
         Dir travel = Dir.fromRot(rot);
 
-        if (outEdge == travel) return true; // forward always exists
+        boolean forward = (variant == Variant.FL || variant == Variant.FR);
+        boolean left    = (variant == Variant.FL || variant == Variant.LR);
+        boolean right   = (variant == Variant.FR || variant == Variant.LR);
 
-        boolean left  = (variant == Variant.FL || variant == Variant.LR);
-        boolean right = (variant == Variant.FR || variant == Variant.LR);
-
-        if (left && outEdge == travel.left()) return true;
-        if (right && outEdge == travel.right()) return true;
+        if (forward && outEdge == travel) return true;
+        if (left    && outEdge == travel.left()) return true;
+        if (right   && outEdge == travel.right()) return true;
 
         return false;
     }
+
 
     private void stepInputTowardDecision() {
         // Input lane: (0,2)->(1,2)->(2,2)

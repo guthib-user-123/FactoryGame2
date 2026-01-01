@@ -677,7 +677,10 @@ public class Main extends ApplicationAdapter {
     }
 
     public void controls(){
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) Gdx.app.exit();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F4)){
+            saveGame();
+            Gdx.app.exit();
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
             if (Gdx.graphics.isFullscreen()) {
                 Gdx.graphics.setWindowedMode(1280, 720);
@@ -1129,7 +1132,7 @@ public class Main extends ApplicationAdapter {
                 }
 
                 tileWorld.rebuildEntityAt(hoverCellX, hoverCellY);
-                tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
+//                tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
 
             }
         }
@@ -1142,7 +1145,7 @@ public class Main extends ApplicationAdapter {
             }
             world.grid[hoverCellX][hoverCellY] = WorldGrid.TILE_EMPTY;
             tileWorld.clearEntityAt(hoverCellX, hoverCellY);
-            tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
+//            tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
 
         }
 
