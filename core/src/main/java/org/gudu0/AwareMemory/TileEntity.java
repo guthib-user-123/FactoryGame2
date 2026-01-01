@@ -65,6 +65,14 @@ public abstract class TileEntity {
         return entryCellFrom(fromEdge) != null;
     }
 
+    public boolean hasAnyItems() {
+        for (int u = 0; u < 5; u++) {
+            for (int v = 0; v < 5; v++) {
+                if (occ[u][v] != EMPTY) return true;
+            }
+        }
+        return false;
+    }
 
     // Rotate a LOCAL coordinate from base-rot(0) space into current rot space.
     // rot = 0 right, 1 down, 2 left, 3 up

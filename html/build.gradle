@@ -43,6 +43,7 @@ gwt {
 sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
 
 def gwtOutDir = file("$buildDir/gwt/out")
+def ghPagesDir = file("C:/Users/bobha/Documents/Github Repos/Aware-Memory/docs")
 
 tasks.register("copyWebapp", Copy) {
   dependsOn("compileGwt")
@@ -55,4 +56,14 @@ tasks.register("copyWebapp", Copy) {
 
 tasks.register("dist") {
   dependsOn("compileGwt", "copyWebapp")
+}
+
+tasks.register("syncGhPages", Sync) {
+  dependsOn("dist")
+  from(gwtOutDir)
+  into(ghPagesDir)
+}
+
+tasks.named("dist") {
+  finalizedBy("syncGhPages")
 }

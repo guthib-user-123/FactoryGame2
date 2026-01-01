@@ -72,6 +72,43 @@ public final class AutoPlacementTest {
         // Confirmed Visually
     }
 
+    @Test void becomesTurnCorrectly(){
+        TestHarness h = new TestHarness();
+        int cx = 2, cy = 2;
+
+        h.place(TILE_CONVEYOR, cx, cy, E);
+        h.place(TILE_CONVEYOR, cx + 1, cy, E);
+        // 2 long line of conveyors
+
+        h.place(TILE_CONVEYOR, cx + 1, cy - 1, S);
+        // Down facing conveyor below 2nd top conveyor.
+
+        h.assertConveyorShape(ConveyorEntity.Shape.TURN_RIGHT, cx + 1, cy);
+        // last conveyor should now be a turn.
+
+
+    }
+
+    @Test
+    void cornerEastToDown_isRotSouth_andTurnRightInputFromWest() {
+        TestHarness h = new TestHarness();
+        int cx = 2, cy = 2;
+
+        // feeder from the west
+        h.place(TILE_CONVEYOR, cx, cy, E);
+
+        // corner outputs DOWN, so rot = S (not E)
+        h.place(TILE_CONVEYOR, cx + 1, cy, S);
+
+        // next belt continues downward
+        h.place(TILE_CONVEYOR, cx + 1, cy - 1, S);
+
+        // Corner should accept from WEST (which is out.right when out=S)
+        h.assertTile(WorldGrid.TILE_CONVEYOR, cx + 1, cy, S);
+        h.assertConveyorShape(ConveyorEntity.Shape.TURN_RIGHT, cx + 1, cy);
+    }
+
+
     @Test
     public void turnConvertsToMergeCorrectly(){
         TestHarness h = new TestHarness();

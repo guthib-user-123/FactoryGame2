@@ -413,6 +413,35 @@ public final class TileWorld {
         for (int[] o : d) refreshSplitterVariantAt(cx + o[0], cy + o[1]);
     }
 
+    private boolean maybeAutoRotateConveyor(int x, int y) {
+        if (world.grid[x][y] != WorldGrid.TILE_CONVEYOR) return false;
+
+        TileEntity te = getEntity(x, y);
+//        if (te != null && te.hasAnyItems()) return false; // implement this helper // I don't mind if it has items
+
+        Dir curOut = Dir.fromRot(world.rot[x][y]);
+
+        // if current output works, keep it (stability)
+        if (canOutputTo(x, y, curOut)) return false;
+
+        Dir only = null;
+        int count = 0;
+        for (Dir d : Dir.CARDINALS) { // E,S,W,N
+            if (canOutputTo(x, y, d)) {
+                only = d;
+                count++;
+                if (count > 1) return false; // ambiguous: do nothing
+            }
+        }
+
+        if (count == 1) {
+            world.rot[x][y] = only.toRot();
+            return true;
+        }
+        return false;
+    }
+
+
     // Decide if a conveyor should be upgraded into a splitter based on available outputs.
     public int decideAutoTileForConveyor(int cx, int cy, int outRot) {
         Dir out = Dir.fromRot(outRot);
