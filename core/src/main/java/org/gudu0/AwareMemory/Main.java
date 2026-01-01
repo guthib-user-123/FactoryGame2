@@ -41,7 +41,7 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera camera;
     private Viewport viewport;
     private SpriteBatch batch;
-    private float money = 100.0f;
+    private float money = 9999990.0f;
 
     @SuppressWarnings("FieldCanBeLocal")
     private OrthographicCamera hudCamera;
@@ -87,6 +87,7 @@ public class Main extends ApplicationAdapter {
     private int hotbarPage = 0;
     private int hotbarSlot = 0; // 0..9
     private int scrollDelta = 0;
+    @SuppressWarnings("FieldCanBeLocal")
     private int hotbarHoverSlot = -1;
 
     private static final int MAX_TILE_ID = 256;
@@ -1128,6 +1129,8 @@ public class Main extends ApplicationAdapter {
                 }
 
                 tileWorld.rebuildEntityAt(hoverCellX, hoverCellY);
+                tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
+
             }
         }
 
@@ -1139,6 +1142,8 @@ public class Main extends ApplicationAdapter {
             }
             world.grid[hoverCellX][hoverCellY] = WorldGrid.TILE_EMPTY;
             tileWorld.clearEntityAt(hoverCellX, hoverCellY);
+            tileWorld.refreshAutoTilesNear(hoverCellX, hoverCellY);
+
         }
 
     }

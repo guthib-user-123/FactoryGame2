@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({"EnhancedSwitchMigration", "PatternVariableCanBeUsed"})
+@SuppressWarnings({"PatternVariableCanBeUsed", "EnhancedSwitchMigration"})
 public final class TileWorld {
     private static final float FIXED_TICK = 1f / 60f;
 
@@ -427,7 +427,7 @@ public final class TileWorld {
         // Any 2 of the 3 inputs -> merger
         int inCount = (inBack ? 1 : 0) + (inLeft ? 1 : 0) + (inRight ? 1 : 0);
 
-        if (fOk && inCount >= 2) {
+        if (inCount >= 2) {
             return WorldGrid.TILE_MERGER;
         }
 
@@ -441,6 +441,59 @@ public final class TileWorld {
 
         return WorldGrid.TILE_CONVEYOR;
     }
+
+    // TileWorld.java
+    public void refreshAutoTilesNear(int cx, int cy) {
+        java.util.ArrayDeque<int[]> q = new java.util.ArrayDeque<>();
+        boolean[][] inQ = new boolean[world.wCells][world.hCells];
+
+        java.util.function.BiConsumer<Integer, Integer> enqueue = (x, y) -> {
+            if (!world.inBoundsCell(x, y)) return;
+            if (inQ[x][y]) return;
+            inQ[x][y] = true;
+            q.add(new int[]{x, y});
+        };
+
+        // seed: changed cell + 4-neighborhood
+        enqueue.accept(cx, cy);
+        enqueue.accept(cx + 1, cy);
+        enqueue.accept(cx - 1, cy);
+        enqueue.accept(cx, cy + 1);
+        enqueue.accept(cx, cy - 1);
+
+        while (!q.isEmpty()) {
+            int[] p = q.removeFirst();
+            int x = p[0], y = p[1];
+            inQ[x][y] = false;
+
+            int id = world.grid[x][y];
+
+            // Only these are auto-managed.
+            if (id != WorldGrid.TILE_CONVEYOR
+                && id != WorldGrid.TILE_SPLITTER
+                && id != WorldGrid.TILE_MERGER) {
+                continue;
+            }
+
+            int rot = world.rot[x][y];
+            int desired = decideAutoTileForConveyor(x, y, rot);
+
+            if (desired == id) continue;
+
+            // Apply change and rebuild entity so neighbor checks see correct behavior.
+            world.grid[x][y] = desired;
+            rebuildEntityAt(x, y);
+
+            // any change might affect neighbors' eligibility -> recheck neighborhood
+            enqueue.accept(x + 1, y);
+            enqueue.accept(x - 1, y);
+            enqueue.accept(x, y + 1);
+            enqueue.accept(x, y - 1);
+            enqueue.accept(x, y); // recheck self too (cheap safety)
+        }
+    }
+
+
 
     @SuppressWarnings("ClassCanBeRecord")
     public static final class ItemRenderInfo {

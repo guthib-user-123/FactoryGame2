@@ -1,90 +1,145 @@
 package org.gudu0.AwareMemory;
 
+import org.gudu0.AwareMemory.entities.ConveyorEntity;
+import org.gudu0.AwareMemory.entities.SplitterEntity;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 public final class TestHarness {
 
-    static WorldGrid worldGrid;
-    static TileWorld tileWorld;
-
-    public static String ANSI_RESET = "\u001b[0m";
-    public static String ANSI_RED = "\u001b[31m";
-    public static String ANSI_GREEN = "\u001b[32m";
-    public static String ANSI_YELLOW = "\u001b[33m";
-    public static String ANSI_BLUE = "\u001b[34m";
-
+    public final WorldGrid world;
+    public final TileWorld tileWorld;
 
     public TestHarness() {
-        worldGrid = new WorldGrid(5, 5);
-        tileWorld = new TileWorld(worldGrid);
+        this.world = new WorldGrid(5, 5);
+        this.tileWorld = new TileWorld(world);
     }
 
-//    public static void main(String[] args) {
-//        new TestHarness();
-//        place(1, 5, 5, 0);
-////        assertTile(5, 5, 5, 0);
-//        place(2, 6, 5, 0);
-//        dump(true, true);
-//    }
+    public void delete(int cx, int cy) {
+        world.grid[cx][cy] = WorldGrid.TILE_EMPTY;
+        tileWorld.clearEntityAt(cx, cy);
+        tileWorld.refreshAutoTilesNear(cx, cy);
 
-    public void place(int tileID, int cellX, int cellY, int rot) {
-        if (worldGrid.grid[cellX][cellY] == WorldGrid.TILE_EMPTY) {
-
-            worldGrid.grid[cellX][cellY] = tileID;
-            worldGrid.rot[cellX][cellY] = rot;
-
-            // AUTO-UPGRADE: if we placed a conveyor, maybe it should become a splitter
-            if (tileID == WorldGrid.TILE_CONVEYOR) {
-                int upgraded = tileWorld.decideAutoTileForConveyor(cellX, cellY, rot);
-                worldGrid.grid[cellX][cellY] = upgraded;
-            }
-
-            tileWorld.rebuildEntityAt(cellX, cellY);
-        }
     }
 
-    public void assertTile(int expectedTileID, int cellX, int cellY, int expectedRot) {
-        if (worldGrid.grid[cellX][cellY] != expectedTileID) {
-            System.out.println("wrong tile");
-            System.out.println("Expected " + worldGrid.getTileName(expectedTileID) + ", but got " + worldGrid.getTileName(worldGrid.grid[cellX][cellY]) + ".");
-            dump(true, false);
-            throw new AssertionError();
+    public void place(int tileID, int cx, int cy, int rot) {
+        if (world.grid[cx][cy] != WorldGrid.TILE_EMPTY) return;
+
+        world.grid[cx][cy] = tileID;
+        world.rot[cx][cy] = rot;
+
+        if (tileID == WorldGrid.TILE_CONVEYOR) {
+            int upgraded = tileWorld.decideAutoTileForConveyor(cx, cy, rot);
+            world.grid[cx][cy] = upgraded;
         }
-        if (worldGrid.rot[cellX][cellY] != expectedRot) {
-            System.out.println("wrong rot");
-            System.out.println("Expected " + worldGrid.getRotName(expectedRot) + ", but got " + worldGrid.getRotName(worldGrid.rot[cellX][cellY]) + ".");
-            dump(false, true);
-            throw new AssertionError();
-        }
+
+        tileWorld.rebuildEntityAt(cx, cy);
+        tileWorld.refreshAutoTilesNear(cx, cy);
     }
 
-    private static void dump(boolean dumpGrid, boolean dumpRot) {
-        int w = worldGrid.wCells;
-        int h = worldGrid.hCells;
+    // ---- Assertions ----
+
+    public void assertTileId(int expectedTileID, int cx, int cy) {
+        int got = world.grid[cx][cy];
+        assertEquals(
+            expectedTileID, got,
+            () -> "TileID mismatch @(" + cx + "," + cy + ")\n"
+                + "Expected: " + world.getTileName(expectedTileID) + "\n"
+                + "Got:      " + world.getTileName(got) + "\n\n"
+                + dump(true, false)
+        );
+//        System.out.println(dump(true, false));
+
+    }
+
+    public void assertRot(int expectedRot, int cx, int cy) {
+        int got = world.rot[cx][cy];
+        assertEquals(
+            expectedRot, got,
+            () -> "Rot mismatch @(" + cx + "," + cy + ")\n"
+                + "Expected: " + world.getRotName(expectedRot) + "\n"
+                + "Got:      " + world.getRotName(got) + "\n\n"
+                + dump(false, true)
+        );
+//        System.out.println(dump(false, true));
+
+    }
+
+    public void assertTile(int expectedTileID, int cx, int cy, int expectedRot) {
+        assertTileId(expectedTileID, cx, cy);
+        assertRot(expectedRot, cx, cy);
+    }
+
+    public void assertSplitterVariant(SplitterEntity.Variant expected, int cx, int cy) {
+        TileEntity te = tileWorld.getEntity(cx, cy);
+        //noinspection SimplifiableAssertion
+        assertTrue(te instanceof SplitterEntity,
+            () -> "Expected SplitterEntity @(" + cx + "," + cy + "), got: " + (te == null ? "null" : te.getClass().getSimpleName())
+                + "\n\n" + dump(true, true));
+
+        SplitterEntity s = (SplitterEntity) te;
+        assertEquals(expected, s.getVariant(),
+            () -> "Splitter variant mismatch @(" + cx + "," + cy + ")\n"
+                + "Expected: " + expected + "\n"
+                + "Got:      " + s.getVariant() + "\n\n" + dump(true, true));
+//        System.out.println(dump(true, true));
+    }
+
+    public void assertConveyorShape(ConveyorEntity.Shape expected, int cx, int cy) {
+        TileEntity te = tileWorld.getEntity(cx, cy);
+        //noinspection SimplifiableAssertion
+        assertTrue(te instanceof ConveyorEntity,
+            () -> "Expected ConveyorEntity @(" + cx + "," + cy + "), got: " + (te == null ? "null" : te.getClass().getSimpleName())
+                + "\n\n" + dump(true, true));
+
+        ConveyorEntity c = (ConveyorEntity) te;
+        assertEquals(expected, c.getShape(),
+            () -> "Conveyor shape mismatch @(" + cx + "," + cy + ")\n"
+                + "Expected: " + expected + "\n"
+                + "Got:      " + c.getShape() + "\n\n" + dump(true, true));
+//        System.out.println(dump(true, true));
+
+    }
+
+    public void spawnOnTile(int cx, int cy, ItemType type, float value, Dir fromEdge) {
+        tileWorld.spawnOnTile(cx, cy, type, value, fromEdge);
+    }
+
+    public void assertItemCount(int expected) {
+        assertEquals(expected, tileWorld.itemCount(),
+            () -> "Item count mismatch\nExpected: " + expected + "\nGot: " + tileWorld.itemCount() + "\n\n" + dump(true, true));
+//        System.out.println(dump(true, true));
+
+    }
+
+    // ---- Dump ----
+
+    private String dump(boolean dumpGrid, boolean dumpRot) {
+        int w = world.wCells;
+        int h = world.hCells;
+
+        StringBuilder sb = new StringBuilder();
 
         if (dumpGrid) {
-            System.out.println("=== GRID (tile ids) ===");
-            for (int y = h - 1; y >= 0; y--) { // top -> bottom for nicer map viewing
+            sb.append("=== GRID (tile ids) ===\n");
+            for (int y = h - 1; y >= 0; y--) {
                 for (int x = 0; x < w; x++) {
-                    int id = worldGrid.grid[x][y]; // IMPORTANT: grid[x][y]
-                    if (id != 0) {
-                        System.out.print(ANSI_RED + id + ANSI_RESET + "  ");
-                    } else {
-                        System.out.print(id + "  ");
-                    }
+                    sb.append(world.grid[x][y]).append("  ");
                 }
-                System.out.println();
+                sb.append("\n");
             }
         }
 
         if (dumpRot) {
-            System.out.println("=== ROT (0=E,1=S,2=W,3=N) ===");
-            for (int y = h - 1; y >= 0; y--) { // top -> bottom
+            sb.append("=== ROT (0=E,1=S,2=W,3=N) ===\n");
+            for (int y = h - 1; y >= 0; y--) {
                 for (int x = 0; x < w; x++) {
-                    int r = worldGrid.rot[x][y]; // IMPORTANT: rot[x][y]
-                    System.out.print(r + "  ");
+                    sb.append(world.rot[x][y]).append("  ");
                 }
-                System.out.println();
+                sb.append("\n");
             }
         }
-    }
 
+        return sb.toString();
+    }
 }
