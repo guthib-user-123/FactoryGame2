@@ -44,7 +44,7 @@ public class WorldGrid {
 
     public static class ItemSave {
         public int id;
-        public String type;   // "ORE","DUST","INGOT" (string is safest for compatibility)
+        public byte typeId;   // ItemType.ordinal()
         public float value;
 
         public int cx, cy;    // tile coords
@@ -131,59 +131,20 @@ public class WorldGrid {
     }
 
     public void saveWithTileWorld(String name, TileWorld tileWorld) {
-        SaveData s = new SaveData();
-        s.w = wCells;
-        s.h = hCells;
-        s.tiles = new int[s.w * s.h];
-        s.rots  = new int[s.w * s.h];
-
-        for (int y = 0; y < s.h; y++) {
-            for (int x = 0; x < s.w; x++) {
-                int i = x + y * s.w;
-                s.tiles[i] = grid[x][y];
-                s.rots[i]  = rot[x][y];
-            }
-        }
-
-        // New: items + machine state
-        s.nextItemId = tileWorld.exportNextItemId();
-        s.tileSaves = tileWorld.exportTileSaves();
-
-        ArrayList<ItemSave> list = tileWorld.exportItemSaves();
-        s.items = list.toArray(new ItemSave[0]);
-
-
-        Json json = createJson();
-        if (isWeb()) {
-            Preferences prefs = Gdx.app.getPreferences("saves");
-            prefs.putString(name, json.toJson(s, SaveData.class));
-            prefs.flush();
-        } else {
-            FileHandle fh = Gdx.files.local(name);
-            fh.writeString(json.toJson(s, SaveData.class), false);
-        }
+        SaveIO.save(name, this, tileWorld);
     }
 
+
     public void loadWithTileWorld(String name) {
-        Json json = createJson();
-        SaveData s;
-        if (isWeb()) {
-            Preferences prefs = Gdx.app.getPreferences("saves");
-            if (!prefs.contains(name)) return;
-            String data = prefs.getString(name, "");
-            if (data.length() == 0) return;
-            s = json.fromJson(SaveData.class, data);
-        } else {
-            FileHandle fh = Gdx.files.local(name);
-            if (!fh.exists()) return;
-            s = json.fromJson(SaveData.class, fh);
-        }
+        SaveIO.LoadedData s = SaveIO.load(name);
+        if (s == null) return;
 
         if (s.w != wCells || s.h != hCells) {
             throw new RuntimeException("Save dimensions mismatch. Save=" + s.w + "x" + s.h +
                 " Current=" + wCells + "x" + hCells);
         }
 
+        // Fill grid/rot from linear arrays
         for (int y = 0; y < s.h; y++) {
             for (int x = 0; x < s.w; x++) {
                 int i = x + y * s.w;
@@ -192,11 +153,12 @@ public class WorldGrid {
             }
         }
 
-        // Stash items for later. Old saves: s.items == null, s.nextItemId == 0.
+        // Stash for later (same pattern you already use)
         pendingItems = s.items;
         pendingNextItemId = s.nextItemId;
         pendingTileSaves = s.tileSaves;
     }
+
 
     public void applyLoadedItemsTo(TileWorld tileWorld) {
         tileWorld.importItemSaves(pendingItems, pendingNextItemId);

@@ -322,12 +322,11 @@ public final class TileWorld {
                 if (te == null) continue;
                 if (te.occ[s.u][s.v] != TileEntity.EMPTY) continue;
 
-                ItemType type;
-                try {
-                    type = ItemType.valueOf(s.type);
-                } catch (Exception e) {
-                    continue;
-                }
+                ItemType[] types = ItemType.values();
+                int tid = s.typeId & 0xFF;
+                if (tid < 0 || tid >= types.length) continue;
+                ItemType type = types[tid];
+
 
                 Item it = new Item(s.id, type, s.value);
                 items.put(it.id, it);
@@ -412,7 +411,7 @@ public final class TileWorld {
 
                         WorldGrid.ItemSave s = new WorldGrid.ItemSave();
                         s.id = it.id;
-                        s.type = it.type.name();
+                        s.typeId = (byte) it.type.ordinal();
                         s.value = it.value;
                         s.cx = x; s.cy = y;
                         s.u = u; s.v = v;

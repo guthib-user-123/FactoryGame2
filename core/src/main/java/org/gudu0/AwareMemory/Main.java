@@ -11,12 +11,14 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.utils.TimeUtils;
 
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
 import org.gudu0.AwareMemory.entities.FilterEntity;
@@ -189,6 +191,7 @@ public class Main extends ApplicationAdapter {
     @SuppressWarnings({"SpellCheckingInspection"})
     @Override
     public void create() {
+        Gdx.app.setLogLevel(com.badlogic.gdx.Application.LOG_DEBUG);
         world = new WorldGrid();
         playerTex = new Texture(Gdx.files.internal("player.png"));
         player = new PlayerSystem(playerTex, world);
@@ -720,26 +723,44 @@ public class Main extends ApplicationAdapter {
     private int worldCellsY() { return world.hCells; }
 
     private void saveGame() {
-        Gdx.app.log("Save", "Saving to save2");
         world.saveWithTileWorld("save2", tileWorld);
     }
 
     private void loadGame() {
-        Gdx.app.log("Save", "Loading from save2");
+        long t0 = TimeUtils.millis();
         world.loadWithTileWorld("save2");
+        long t1 = TimeUtils.millis();
 
-        // rebuild entities from tiles/rots
         for (int x = 0; x < world.wCells; x++) {
             for (int y = 0; y < world.hCells; y++) {
-                if (world.grid[x][y] == WorldGrid.TILE_EMPTY) tileWorld.clearEntityAt(x, y);
-                else tileWorld.rebuildEntityAt(x, y);
+                if (world.grid[x][y] == WorldGrid.TILE_EMPTY)
+                    tileWorld.clearEntityAtFromSmartPlacement(x, y);
+                else
+                    tileWorld.rebuildEntityAtFromSmartPlacement(x, y);
             }
         }
-        tileWorld.refreshAllConveyorShapes();
+        long t2 = TimeUtils.millis();
 
-        // import items into rebuilt entities
+        SmartPlacement.refreshAll(tileWorld);
+        long t3 = TimeUtils.millis();
+
         world.applyLoadedItemsTo(tileWorld);
+        long t4 = TimeUtils.millis();
+
+        Gdx.app.log("LoadPerf", "loadWithTileWorld: " + (t1 - t0) + "ms");
+        Gdx.app.log("LoadPerf", "rebuildEntities:   " + (t2 - t1) + "ms");
+        Gdx.app.log("LoadPerf", "smartPlacement:    " + (t3 - t2) + "ms");
+        Gdx.app.log("LoadPerf", "applyItems:        " + (t4 - t3) + "ms");
+        Gdx.app.log("LoadPerf", "TOTAL:             " + (t4 - t0) + "ms");
+
+//        System.out.println("loadWithTileWorld: " + (t1 - t0) + "ms");
+//        System.out.println("rebuildEntities:   " + (t2 - t1) + "ms");
+//        System.out.println("smartPlacement:    " + (t3 - t2) + "ms");
+//        System.out.println("extraShapes:       " + (t4 - t3) + "ms");
+//        System.out.println("applyItems:        " + (t5 - t4) + "ms");
+//        System.out.println("TOTAL:             " + (t5 - t0) + "ms");
     }
+
 
     @SuppressWarnings("SpellCheckingInspection")
     public void doCameraStuff(float dt){
