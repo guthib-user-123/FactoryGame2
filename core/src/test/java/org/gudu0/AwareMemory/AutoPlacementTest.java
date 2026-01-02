@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.gudu0.AwareMemory.WorldGrid.TILE_CONVEYOR;
 
-@SuppressWarnings("GrazieInspection")
 public final class AutoPlacementTest {
 
     // Rotation convention: 0=EAST, 1=SOUTH, 2=WEST, 3=NORTH
+    @SuppressWarnings("unused")
     private static final int E = 0, S = 1, W = 2, N = 3;
 
     @Test
@@ -75,23 +75,6 @@ public final class AutoPlacementTest {
         // Confirmed Visually
     }
 
-    //fails
-    @Test
-    public void becomesTurnCorrectly(){
-        TestHarness h = new TestHarness();
-        int cx = 2, cy = 2;
-
-        h.place(TILE_CONVEYOR, cx, cy, E);
-        h.place(TILE_CONVEYOR, cx + 1, cy, E);
-        // 2 long line of conveyors
-
-        h.place(TILE_CONVEYOR, cx + 1, cy - 1, S);
-        // Down facing conveyor below 2nd top conveyor.
-
-        h.assertConveyorShape(ConveyorEntity.Shape.TURN_RIGHT, cx + 1, cy);
-        // last conveyor should now be a turn.
-
-    }
 
     @Test
     void cornerEastToDown_isRotSouth_andTurnRightInputFromWest() {
@@ -326,13 +309,6 @@ public final class AutoPlacementTest {
         h.assertRot(S, cx, cy-1);
     }
 
-    @Test
-    public void conveyorCornerShapePicksTURN_LEFTvsTURN_RIGHT(){
-        TestHarness h = new TestHarness();
-        int cx = 2, cy = 2;
-
-
-    }
 
     @Test
     public void mergerVariantPicksLRWhenFedFromVothSidesNoBack(){

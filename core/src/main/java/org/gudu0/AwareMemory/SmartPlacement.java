@@ -141,6 +141,7 @@ public final class SmartPlacement {
                 // - else if forward+left valid => FL
                 // - else if forward+right valid => FR
                 // - else keep current (don’t thrash)
+                //noinspection UnnecessaryLocalVariable
                 SplitterEntity.Variant cur = s.getVariant();
                 SplitterEntity.Variant next = cur;
 
@@ -269,14 +270,9 @@ public final class SmartPlacement {
     }
 
     /**
-     * SmartPlacement output check:
-     * Returns true if we COULD output into that side after the player extends the line.
-     *
-     * - Empty cell => true (potential outlet)
-     * - Existing entity => must accept from our side
-     * - Out of bounds => false
-     *
-     * This is intentionally more permissive than "actually connected right now".
+     * Strict output check:
+     * Only true if a REAL neighbor exists AND it would accept from us.
+     * (Empty space is NOT considered a valid output for splitters/variants.)
      */
     private static boolean canOutputTo(TileWorld world, WorldGrid grid, int x, int y, Dir outDir) {
         int nx = x + outDir.dx;
@@ -285,12 +281,11 @@ public final class SmartPlacement {
         if (!grid.inBoundsCell(nx, ny)) return false;
 
         TileEntity neighbor = world.getEntity(nx, ny);
-
-        // IMPORTANT: empty space is still a valid *potential* output for SmartPlacement
-        if (neighbor == null) return true;
+        if (neighbor == null) return false;
 
         return neighbor.acceptsFrom(outDir.opposite());
     }
+
 
     /**
      * For MERGER upgrade only:
@@ -298,10 +293,11 @@ public final class SmartPlacement {
      * - in bounds, and
      * - either the forward cell is empty (player can extend later),
      *   OR there is a neighbor that currently accepts from us.
-     *
+     * <p>
      * We intentionally do NOT use this relaxed rule for splitter outputs,
      * otherwise empty space makes splitters appear possible everywhere.
      */
+    @SuppressWarnings("unused")
     private static boolean mergerForwardOutletOk(TileWorld world, WorldGrid grid, int x, int y, Dir forwardOut) {
         int nx = x + forwardOut.dx;
         int ny = y + forwardOut.dy;
@@ -344,6 +340,10 @@ public final class SmartPlacement {
 
                 // Potential OUTPUT edges a splitter/merger could use
                 boolean canForward = canOutputTo(world, grid, x, y, out);
+                // For merger upgrading, forward doesn't need a placed neighbor.
+                // It only needs to be a valid direction in-bounds (player can extend later).
+                boolean forwardInBounds = grid.inBoundsCell(x + out.dx, y + out.dy);
+
                 boolean canLeft    = canOutputTo(world, grid, x, y, out.left());
                 boolean canRight   = canOutputTo(world, grid, x, y, out.right());
 
@@ -355,9 +355,9 @@ public final class SmartPlacement {
 
                 int nextId = WorldGrid.TILE_CONVEYOR;
 
-                if (canForward && mergerHasTwoInputs) {
+                if (forwardInBounds && mergerHasTwoInputs) {
                     nextId = WorldGrid.TILE_MERGER;
-                } else if (fedBack && splitterHasTwoOutputs) {
+                } else if (splitterHasTwoOutputs) {
                     nextId = WorldGrid.TILE_SPLITTER;
                 }
 
