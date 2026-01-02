@@ -24,8 +24,6 @@ public final class TileWorld {
     private final Map<Integer, Item> items = new HashMap<>();
 
 
-
-
     public TileWorld(WorldGrid world) {
         this.world = world;
         this.entities = new TileEntity[world.wCells][world.hCells];
@@ -326,6 +324,9 @@ public final class TileWorld {
         return true;
     }
 
+    public void clearItems(){
+        items.clear();
+    }
     public int exportNextItemId() { return nextItemId; }
     public Item getItem(int id) { return items.get(id); }
     public void deleteItem(int id) { items.remove(id); }

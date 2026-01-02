@@ -720,7 +720,7 @@ public class Main extends ApplicationAdapter {
                 }
             }
         }
-
+        if (Gdx.input.isKeyJustPressed(Input.Keys.C)) tileWorld.clearItems();
         if (Gdx.input.isKeyJustPressed(Input.Keys.F4)){
             saveGame();
             Gdx.app.exit();
@@ -757,7 +757,6 @@ public class Main extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
             hud.toggleOrdersPanel();
         }
-
     }
 
     private static float clamp(float v, float min, float max) { return Math.max(min, Math.min(max, v)); }
