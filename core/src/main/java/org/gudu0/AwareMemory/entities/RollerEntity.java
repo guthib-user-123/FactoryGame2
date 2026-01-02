@@ -152,6 +152,9 @@ public final class RollerEntity extends TileEntity {
         if (item != null && item.type == ItemType.PLATE) {
             item.type = ItemType.ROD;
             item.value *= outputValueMultiplier;
+
+            // NEW: report processing completion
+            world.getOrders().onItemProcessed(WorldGrid.TILE_ROLLER, ItemType.ROD, 1, world.getMoney());
         }
         hasCompletedSmelt = true;
     }

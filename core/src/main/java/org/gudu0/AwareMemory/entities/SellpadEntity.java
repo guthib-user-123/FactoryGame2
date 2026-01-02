@@ -34,7 +34,7 @@ public final class SellpadEntity extends TileEntity {
                 rotuvToReturn = rotUV(2, 4, rot);
                 break;
             }
-        };
+        }
         return rotuvToReturn;
     }
 
@@ -70,7 +70,11 @@ public final class SellpadEntity extends TileEntity {
                 occ[u][v] = EMPTY;
 
                 if (it != null) {
-                    world.addEarned(it.value);
+                    world.addMoney(it.value);
+
+                    // NEW: report sale event
+                    world.getOrders().onItemSold(it.type, 1, world.getMoney(), world.getTick());
+
                     world.deleteItem(it.id);
                 }
             }

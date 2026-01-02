@@ -7,7 +7,7 @@ import org.gudu0.AwareMemory.TileWorld;
 
 public final class ConveyorEntity extends TileEntity {
     // Tune later; “passes per tick”
-    public float subcellsPerSecond = 24f; // start here (≈ 12/5 = 2.4 tiles/sec)
+    public float subcellsPerSecond = 100f; // start here (≈ 12/5 = 2.4 tiles/sec)
     private float moveAcc = 0f;
 
 
@@ -40,7 +40,7 @@ public final class ConveyorEntity extends TileEntity {
                 in = out.right();  // from right side
                 break;
             }
-        };
+        }
 
         if (fromEdge != in) return null;
 
@@ -62,7 +62,7 @@ public final class ConveyorEntity extends TileEntity {
                 base = new int[]{2, 0};
                 break;
             }
-        };
+        }
 
         return rotUV(base[0], base[1], rot);
     }
@@ -131,6 +131,7 @@ public final class ConveyorEntity extends TileEntity {
         int[][] returnShape = PATH_STRAIGHT; // Default to straight
         switch (shape) {
             case STRAIGHT: {
+                //noinspection DataFlowIssue
                 returnShape = PATH_STRAIGHT;
                 break;
             }
@@ -142,7 +143,7 @@ public final class ConveyorEntity extends TileEntity {
                 returnShape = PATH_RIGHT_IN;
                 break;
             }
-        };
+        }
         return returnShape;
     }
 }

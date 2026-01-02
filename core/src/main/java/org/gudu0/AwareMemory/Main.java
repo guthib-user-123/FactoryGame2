@@ -42,7 +42,6 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera camera;
     private Viewport viewport;
     private SpriteBatch batch;
-    private float money = 9999990.0f;
 
     @SuppressWarnings("FieldCanBeLocal")
     private OrthographicCamera hudCamera;
@@ -196,6 +195,24 @@ public class Main extends ApplicationAdapter {
         player = new PlayerSystem(playerTex, world);
         tileWorld = new TileWorld(world);
         hud = new Hud();
+        tileWorld.addMoney(9999990.0f); // temp test starting money
+
+        ArrayList<Order> milestones = new ArrayList<>();
+        milestones.add(Order.sellItems("sell_10_any", "First Sales", "Sell 10 items.", 100, -1, 10));
+        milestones.add(Order.processInMachine("roll_20", "Rods", "Make 20 rods in a Roller.", 250, WorldGrid.TILE_ROLLER, ItemType.ROD.ordinal(), 20));
+        int targetMoney = (int) tileWorld.getMoney() + 100;
+
+        milestones.add(Order.reachMoney(
+            "money_1000",
+            "Savings",
+            "Reach $" + targetMoney + "!",
+            400,
+            targetMoney
+        ));
+
+        tileWorld.getOrders().setMilestones(milestones);
+
+
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(1920, 1080, camera);
@@ -411,19 +428,26 @@ public class Main extends ApplicationAdapter {
         doSelectionInput();
         doRotationInput();
 
+        Vector2 hm = getHudMouse();
+        boolean uiBlocking = hud.isMouseOverBlockingUi(hm.x, hm.y, filterUiOpen);
+
+        // Hotbar click handling (select slots) happens regardless
         boolean clickedHud = (!filterUiOpen) && doHotbarMouseClick();
 
         if (filterUiOpen) {
-            handleFilterUiInput();   // NEW
+            handleFilterUiInput();
         } else if (!clickedHud) {
-            // Open config UI first; otherwise place/delete
+            // "Try open filter UI" should still work (shift+click), even if UI isn't blocking.
             if (!tryOpenFilterUI()) {
-                doGetPlacement();
+                // Final gate: only allow placement when not over *any* blocking UI
+                if (!uiBlocking) {
+                    doGetPlacement();
+                }
             }
         }
 
+
         tileWorld.update(dt)    ;
-        money += tileWorld.consumeEarnedThisFrame();
 
         doGridDraw();
         doPlacedTilesDraw();
@@ -434,10 +458,9 @@ public class Main extends ApplicationAdapter {
         if (debugOverlay) {
             drawDebugOverlay();
         }
-        Vector2 hm = getHudMouse();
         hotbarHoverSlot = hud.slotAt(hm.x, hm.y);
         hud.draw(batch,
-            money,
+            tileWorld.getMoney(),
             tileWorld.itemCount(),
             hotbarPage,
             hotbarSlot,
@@ -451,6 +474,9 @@ public class Main extends ApplicationAdapter {
         if (filterUiOpen && editingFilter != null) {
             hud.drawFilterPanel(batch, editingFilter, whiteRegion);
         }
+
+        hud.drawOrdersPanel(batch, tileWorld.getOrders(), tileWorld.getMoney(), whiteRegion);
+
 
     }
 
@@ -682,6 +708,19 @@ public class Main extends ApplicationAdapter {
     }
 
     public void controls(){
+        // Claim order reward (mouse click on HUD button)
+        if (hud.isOrdersPanelOpen() && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            Vector2 hm = getHudMouse();
+
+            int claimIndex = hud.ordersClaimButtonAt(hm.x, hm.y, tileWorld.getOrders());
+            if (claimIndex != -1) {
+                int reward = tileWorld.getOrders().tryClaimActiveIndex(claimIndex);
+                if (reward > 0) {
+                    tileWorld.addMoney(reward);
+                }
+            }
+        }
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.F4)){
             saveGame();
             Gdx.app.exit();
@@ -715,6 +754,10 @@ public class Main extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
             debugOverlay = !debugOverlay;
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            hud.toggleOrdersPanel();
+        }
+
     }
 
     private static float clamp(float v, float min, float max) { return Math.max(min, Math.min(max, v)); }
@@ -759,7 +802,6 @@ public class Main extends ApplicationAdapter {
 //        System.out.println("applyItems:        " + (t5 - t4) + "ms");
 //        System.out.println("TOTAL:             " + (t5 - t0) + "ms");
     }
-
 
     @SuppressWarnings("SpellCheckingInspection")
     public void doCameraStuff(float dt){
@@ -847,7 +889,7 @@ public class Main extends ApplicationAdapter {
         float x = hoverCellX * WorldGrid.CELL;
         float y = hoverCellY * WorldGrid.CELL;
 
-        boolean ok = world.grid[hoverCellX][hoverCellY] == WorldGrid.TILE_EMPTY && !player.blocksCell(world, hoverCellX, hoverCellY) && money >= getTileCost(selectedTile);
+        boolean ok = world.grid[hoverCellX][hoverCellY] == WorldGrid.TILE_EMPTY && !player.blocksCell(world, hoverCellX, hoverCellY) && tileWorld.getMoney() >= getTileCost(selectedTile);
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -872,6 +914,7 @@ public class Main extends ApplicationAdapter {
         batch.setColor(1f, 1f, 1f, 1f);
         batch.end();
     }
+
     private float getTileCost(int tile) {
         if (tile < 0 || tile >= MAX_TILE_ID) return 0f;
         return costByTile[tile];
@@ -920,7 +963,6 @@ public class Main extends ApplicationAdapter {
         applyHotbarSelection(); // your existing method :contentReference[oaicite:5]{index=5}
         return true;
     }
-
 
     private void selectSlot(int slot) {
         hotbarSlot = slot;
@@ -1132,9 +1174,6 @@ public class Main extends ApplicationAdapter {
     }
 
     public void doGetPlacement() {
-        Vector2 hm = getHudMouse();
-        if (hud.isOverHotbar(hm.x, hm.y)) return;
-
         if (!hoverValid) return;
         if (player.blocksCell(world, hoverCellX, hoverCellY)) { return; }
 
@@ -1144,8 +1183,8 @@ public class Main extends ApplicationAdapter {
                 if (!isManuallyPlaceable(selectedTile)) return;
 
                 float cost = getTileCost(selectedTile);
-                if (money < cost) return; // can't afford
-                money -= cost;
+                if (!tileWorld.trySpendMoney(cost)) return;
+
 
                 world.grid[hoverCellX][hoverCellY] = selectedTile;
                 world.rot[hoverCellX][hoverCellY] = selectedRot;
@@ -1156,6 +1195,9 @@ public class Main extends ApplicationAdapter {
                     world.grid[hoverCellX][hoverCellY] = upgraded;
                 }
                 tileWorld.rebuildEntityAt(hoverCellX, hoverCellY);
+                int placedId = world.grid[hoverCellX][hoverCellY]; // includes auto-upgrade result
+                tileWorld.getOrders().onTilePlaced(placedId, tileWorld.getMoney(), tileWorld.getTick());
+
             }
         }
 
@@ -1164,7 +1206,7 @@ public class Main extends ApplicationAdapter {
         if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
             int old = world.grid[hoverCellX][hoverCellY];
             if (old != WorldGrid.TILE_EMPTY) {
-                money += getTileCost(old) * REFUND_RATE;
+                tileWorld.addMoney(getTileCost(old) * REFUND_RATE);
             }
             world.grid[hoverCellX][hoverCellY] = WorldGrid.TILE_EMPTY;
             tileWorld.clearEntityAt(hoverCellX, hoverCellY);

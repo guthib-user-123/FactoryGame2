@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import org.gudu0.AwareMemory.entities.FilterEntity;
 
+import java.util.List;
+
 @SuppressWarnings("EnhancedSwitchMigration")
 public class Hud {
     public final OrthographicCamera cam;
@@ -35,6 +37,15 @@ public class Hud {
     final float rowsTopPad = 100f;   // distance from panel top to first row's box bottom
     final float rowStep = 44f;      // distance between row box bottoms (can be != valueH)
 
+    // ---------------- Orders panel (HUD coords) ----------------
+    private boolean ordersOpen = false;
+
+    private final float ordersPanelW = 560f;
+    private final float ordersPanelH = 640f;
+    private final float ordersPanelX = 1920f - ordersPanelW - 20f; // right side
+    private final float ordersPanelY = 1080f - ordersPanelH - 20f; // top padding
+
+
     // Returns the Y (bottom) of the first row's value box
     private float firstRowY() {
         return filterPanelY + filterPanelHeight - rowsTopPad;
@@ -51,6 +62,24 @@ public class Hud {
     public boolean isOverFilterPanel(float hudX, float hudY) {
         return hudX >= filterPanelX && hudX <= filterPanelX + filterPanelWidth && hudY >= filterPanelY && hudY <= filterPanelY + filterPanelHeight;
     }
+    public boolean isMouseOverBlockingUi(float hudX, float hudY, boolean filterOpen) {
+        // Hotbar always blocks placement clicks
+        if (isOverHotbar(hudX, hudY)) return true;
+
+        // Filter panel blocks if open
+        if (filterOpen && isOverFilterPanel(hudX, hudY)) return true;
+
+        // Orders panel blocks if open (we add this helper below)
+        if (ordersOpen && isOverOrdersPanel(hudX, hudY)) return true;
+
+        return false;
+    }
+
+    private boolean isOverOrdersPanel(float hudX, float hudY) {
+        return hudX >= ordersPanelX && hudX <= ordersPanelX + ordersPanelW
+            && hudY >= ordersPanelY && hudY <= ordersPanelY + ordersPanelH;
+    }
+
 
     // Returns: -1 none, 0 forward, 1 left, 2 right, 99 close
     public int filterButtonAt(float hudX, float hudY, org.gudu0.AwareMemory.entities.FilterEntity.Variant variant) {
@@ -155,6 +184,7 @@ public class Hud {
         smallFont.getData().setScale(1.0f);
     }
 
+
     private static String tileName(int tileId) {
         switch (tileId) {
             case WorldGrid.TILE_CONVEYOR: return "Conveyor";
@@ -171,6 +201,124 @@ public class Hud {
             case WorldGrid.TILE_MERGER:   return "Merger";
             default: return "Tile " + tileId;
         }
+    }
+
+    public void toggleOrdersPanel() {
+        ordersOpen = !ordersOpen;
+    }
+
+    public boolean isOrdersPanelOpen() {
+        return ordersOpen;
+    }
+
+    public void closeOrdersPanel() {
+        ordersOpen = false;
+    }
+
+    public void drawOrdersPanel(SpriteBatch batch,
+                                OrderManager orders,
+                                float currentMoney,
+                                TextureRegion white)
+    {
+        if (!ordersOpen) return;
+
+        batch.setProjectionMatrix(cam.combined);
+        batch.begin();
+
+        // Panel background
+        batch.setColor(0f, 0f, 0f, 0.78f);
+        batch.draw(white, ordersPanelX, ordersPanelY, ordersPanelW, ordersPanelH);
+        batch.setColor(1f, 1f, 1f, 1f);
+
+        uiFont.draw(batch, "Orders", ordersPanelX + 16f, ordersPanelY + ordersPanelH - 16f);
+        smallFont.draw(batch, "Press O to close", ordersPanelX + 16f, ordersPanelY + ordersPanelH - 52f);
+
+        // List layout
+        float contentX = ordersPanelX + 16f;
+        float contentW = ordersPanelW - 32f;
+
+        float y = ordersPanelY + ordersPanelH - 90f; // start under header
+        float cardH = 110f;
+        float gap = 10f;
+
+        List<Order> list = orders.getActiveOrdersReadOnly(); // active milestone orders :contentReference[oaicite:2]{index=2}
+        if (list.isEmpty()) {
+            smallFont.draw(batch, "No active orders.", contentX, y);
+            batch.end();
+            return;
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            Order o = list.get(i); // Order has progressText/progress01 helpers :contentReference[oaicite:3]{index=3}
+
+            // Card background
+            batch.setColor(0.12f, 0.12f, 0.12f, 0.95f);
+            batch.draw(white, contentX, y - cardH, contentW, cardH);
+            batch.setColor(1f, 1f, 1f, 1f);
+
+            // Title + description
+            smallFont.draw(batch, o.title, contentX + 10f, y - 12f);
+            smallFont.draw(batch, o.desc,  contentX + 10f, y - 34f);
+
+            // Progress text
+            String prog = o.progressText(currentMoney);
+            smallFont.draw(batch, prog, contentX + 10f, y - 58f);
+
+            // Progress bar
+            float barX = contentX + 10f;
+            float barY = y - 92f;
+            float barW = contentW - 20f;
+            float barHh = 16f;
+
+            // bar bg
+            batch.setColor(0.05f, 0.05f, 0.05f, 1f);
+            batch.draw(white, barX, barY, barW, barHh);
+
+            // bar fill
+            float fill = barW * o.progress01(currentMoney);
+            batch.setColor(o.completed ? 0.3f : 0.2f, o.completed ? 0.8f : 0.6f, 0.2f, 1f);
+            batch.draw(white, barX, barY, fill, barHh);
+            batch.setColor(1f, 1f, 1f, 1f);
+
+            // --- Claim button (top-right of the card) ---
+            // Keep these numbers in ONE place so draw + hit-test match.
+            float btnW = 120f;
+            float btnH = 30f;
+            float btnPad = 10f;
+
+            // Card top-right corner area:
+            float btnX = contentX + contentW - btnW - btnPad;
+            float btnY = (y - btnPad) - btnH; // measured down from the card top (y)
+
+            boolean canClaim = o.completed && !o.claimed;
+
+            if (canClaim) {
+                // Brighter when clickable
+                batch.setColor(0.20f, 0.70f, 0.25f, 1f);
+            } else {
+                // Dim when not claimable
+                batch.setColor(0.20f, 0.20f, 0.20f, 1f);
+            }
+
+            batch.draw(white, btnX, btnY, btnW, btnH);
+            batch.setColor(1f, 1f, 1f, 1f);
+
+            // Button label
+            String label;
+            if (o.claimed) label = "CLAIMED";
+            else if (o.completed) label = "CLAIM +$" + o.rewardMoney;
+            else label = "+$" + o.rewardMoney; // show reward even before completion
+
+            smallFont.draw(batch, label, btnX + 10f, btnY + 21f);
+
+
+            y -= (cardH + gap);
+
+            // Stop drawing if we run off the panel (scroll later)
+            if (y < ordersPanelY + 20f) break;
+        }
+
+        batch.end();
     }
 
 
@@ -277,6 +425,48 @@ public class Hud {
                 return i;
             }
         }
+        return -1;
+    }
+
+    /**
+     * Returns the index of the active order whose CLAIM button is under the mouse.
+     * Returns -1 if none.
+     * <p>
+     * IMPORTANT: This uses the SAME layout math as drawOrdersPanel().
+     */
+    public int ordersClaimButtonAt(float hudX, float hudY, OrderManager orders) {
+        if (!ordersOpen) return -1;
+        if (!isOverOrdersPanel(hudX, hudY)) return -1;
+
+        float contentX = ordersPanelX + 16f;
+        float contentW = ordersPanelW - 32f;
+
+        float y = ordersPanelY + ordersPanelH - 90f;
+        float cardH = 110f;
+        float gap = 10f;
+
+        // Button layout (must match draw)
+        float btnW = 120f;
+        float btnH = 30f;
+        float btnPad = 10f;
+
+        List<Order> list = orders.getActiveOrdersReadOnly();
+
+        for (int i = 0; i < list.size(); i++) {
+            Order o = list.get(i);
+
+            float btnX = contentX + contentW - btnW - btnPad;
+            float btnY = (y - btnPad) - btnH;
+
+            boolean canClaim = o.completed && !o.claimed;
+            if (canClaim && inBox(hudX, hudY, btnX, btnY, btnW, btnH)) {
+                return i;
+            }
+
+            y -= (cardH + gap);
+            if (y < ordersPanelY + 20f) break;
+        }
+
         return -1;
     }
 

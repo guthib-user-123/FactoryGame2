@@ -24,8 +24,7 @@ public final class TileWorld {
     private final Map<Integer, Item> items = new HashMap<>();
 
 
-    // Economy output for the frame
-    private float earnedThisFrame = 0f;
+
 
     public TileWorld(WorldGrid world) {
         this.world = world;
@@ -279,16 +278,54 @@ public final class TileWorld {
         return world;
     }
 
+    private final OrderManager orders = new OrderManager(3); // keep 3 active
 
-
-
-
-    public void addEarned(float amount) { earnedThisFrame += amount; }
-    public float consumeEarnedThisFrame() {
-        float e = earnedThisFrame;
-        earnedThisFrame = 0f;
-        return e;
+    public OrderManager getOrders() {
+        return orders;
     }
+
+    public int getTick() {
+        return tick;
+    }
+
+    public float getMoney() {
+        return money;
+    }
+
+
+
+    // Money is owned by TileWorld (single source of truth).
+    private float money = 0f;
+
+    // Optional: still track "earned this frame" if you like the concept (HUD effects).
+    private float earnedThisFrame = 0f;
+
+    /**
+     * Add money to the player total.
+     * IMPORTANT: this is the only place that should mutate money.
+     */
+    public void addMoney(float amount) {
+        money += amount;
+        earnedThisFrame += amount;
+
+        // Let orders react to money milestones.
+        orders.onMoneyChanged(money);
+    }
+
+    /**
+     * Spend money for placement.
+     * Returns true if the player could afford it.
+     */
+    public boolean trySpendMoney(float amount) {
+        if (money < amount) return false;
+        money -= amount;
+
+        // Money changed, so money-milestones might (un)block; you only care about >= thresholds,
+        // but calling this keeps logic centralized.
+        orders.onMoneyChanged(money);
+        return true;
+    }
+
     public int exportNextItemId() { return nextItemId; }
     public Item getItem(int id) { return items.get(id); }
     public void deleteItem(int id) { items.remove(id); }
@@ -322,6 +359,7 @@ public final class TileWorld {
 
                 ItemType[] types = ItemType.values();
                 int tid = s.typeId & 0xFF;
+                //noinspection ConstantValue
                 if (tid < 0 || tid >= types.length) continue;
                 ItemType type = types[tid];
 
@@ -436,5 +474,4 @@ public final class TileWorld {
         public float x() { return x; }
         public float y() { return y; }
     }
-
 }
