@@ -1,13 +1,11 @@
 package org.gudu0.AwareMemory;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.Application.ApplicationType;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Json;
 
-import java.util.ArrayList;
 
+@SuppressWarnings("EnhancedSwitchMigration")
 public class WorldGrid {
     public static int GRID_W = 30;
     public static int GRID_H = 30;
@@ -52,6 +50,7 @@ public class WorldGrid {
     }
 
 
+    @SuppressWarnings("unused")
     public static class SaveData {
         public int w, h;
         public int[] tiles;

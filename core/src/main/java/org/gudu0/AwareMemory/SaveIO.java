@@ -10,11 +10,11 @@ import java.util.ArrayList;
 
 /**
  * Binary (packed) save/load that works on Desktop + WebGL.
- *
+ * <p>
  * Stored as a Base64 string:
  * - WebGL: Preferences "saves"
  * - Desktop: local file (Gdx.files.local)
- *
+ * <p>
  * Format v1 (magic + version):
  *   u32 MAGIC = 'FGS1'
  *   u8  VERSION = 1
