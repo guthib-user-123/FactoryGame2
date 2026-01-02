@@ -1,6 +1,7 @@
 package org.gudu0.AwareMemory;
 
 import org.gudu0.AwareMemory.entities.ConveyorEntity;
+import org.gudu0.AwareMemory.entities.SellpadEntity;
 import org.gudu0.AwareMemory.entities.SplitterEntity;
 import org.gudu0.AwareMemory.entities.MergerEntity;
 
@@ -11,6 +12,7 @@ import org.gudu0.AwareMemory.entities.MergerEntity;
  * - Never changes rot (player-owned)
  * - Phase 1: only updates Conveyor shape + Splitter variant
  */
+@SuppressWarnings({"PatternVariableCanBeUsed", "EnhancedSwitchMigration"})
 public final class SmartPlacement {
 
     private SmartPlacement() {}
@@ -47,8 +49,10 @@ public final class SmartPlacement {
         // Snapshot pass: compute desired variants without mutating anything yet.
         for (int y = 0; y < grid.hCells; y++) {
             for (int x = 0; x < grid.wCells; x++) {
-                if (!(world.getEntity(x, y) instanceof MergerEntity m)) continue;
+                if (!(world.getEntity(x, y) instanceof MergerEntity)) continue;
+                MergerEntity m = (MergerEntity) world.getEntity(x, y);
 
+                assert m != null;
                 Dir outDir = Dir.fromRot(m.rot);
 
                 // Merger output is forward; the 3 possible inputs are:
@@ -87,11 +91,13 @@ public final class SmartPlacement {
         // Apply pass
         for (int y = 0; y < grid.hCells; y++) {
             for (int x = 0; x < grid.wCells; x++) {
-                if (!(world.getEntity(x, y) instanceof MergerEntity m)) continue;
+                if (!(world.getEntity(x, y) instanceof MergerEntity)) continue;
+                MergerEntity m = (MergerEntity) world.getEntity(x, y);
 
                 MergerEntity.Variant next = desired[x][y];
                 if (next == null) continue;
 
+                assert m != null;
                 if (m.getVariant() != next) {
                     m.setVariant(next);
                     changedAny = true;
@@ -108,11 +114,19 @@ public final class SmartPlacement {
         boolean fedLeft,
         boolean fedRight
     ) {
-        return switch (variant) {
-            case BL -> fedBack && fedLeft;
-            case BR -> fedBack && fedRight;
-            case LR -> fedLeft && fedRight;
-        };
+        switch (variant) {
+            case BL:
+                return fedBack && fedLeft;
+
+            case BR:
+                return fedBack && fedRight;
+
+            case LR:
+                return fedLeft && fedRight;
+
+            default:
+                return false; // defensive, should never happen if enum is complete
+        }
     }
 
 
@@ -128,8 +142,10 @@ public final class SmartPlacement {
 
         for (int y = 0; y < grid.hCells; y++) {
             for (int x = 0; x < grid.wCells; x++) {
-                if (!(world.getEntity(x, y) instanceof SplitterEntity s)) continue;
+                if (!(world.getEntity(x, y) instanceof SplitterEntity)) continue;
+                SplitterEntity s = (SplitterEntity) world.getEntity(x, y);
 
+                assert s != null;
                 Dir travel = Dir.fromRot(s.rot);
 
                 boolean canForward = canOutputTo(world, grid, x, y, travel);
@@ -155,11 +171,13 @@ public final class SmartPlacement {
 
         for (int y = 0; y < grid.hCells; y++) {
             for (int x = 0; x < grid.wCells; x++) {
-                if (!(world.getEntity(x, y) instanceof SplitterEntity s)) continue;
+                if (!(world.getEntity(x, y) instanceof SplitterEntity)) continue;
+                SplitterEntity s = (SplitterEntity) world.getEntity(x, y);
 
                 SplitterEntity.Variant next = desired[x][y];
                 if (next == null) continue;
 
+                assert s != null;
                 if (s.getVariant() != next) {
                     s.setVariant(next);
                     changedAny = true;
@@ -181,8 +199,10 @@ public final class SmartPlacement {
 
         for (int y = 0; y < grid.hCells; y++) {
             for (int x = 0; x < grid.wCells; x++) {
-                if (!(world.getEntity(x, y) instanceof ConveyorEntity belt)) continue;
+                if (!(world.getEntity(x, y) instanceof ConveyorEntity)) continue;
+                ConveyorEntity belt = (ConveyorEntity) world.getEntity(x,y);
 
+                assert belt != null;
                 Dir out = Dir.fromRot(belt.rot);
 
                 // These are the only 3 possible input sides for a conveyor with fixed rot.
@@ -215,11 +235,13 @@ public final class SmartPlacement {
 
         for (int y = 0; y < grid.hCells; y++) {
             for (int x = 0; x < grid.wCells; x++) {
-                if (!(world.getEntity(x, y) instanceof ConveyorEntity belt)) continue;
+                if (!(world.getEntity(x, y) instanceof ConveyorEntity)) continue;
+                ConveyorEntity belt = (ConveyorEntity) world.getEntity(x,y);
 
                 ConveyorEntity.Shape next = desired[x][y];
                 if (next == null) continue;
 
+                assert belt != null;
                 if (belt.getShape() != next) {
                     belt.setShape(next);
                     changedAny = true;
@@ -236,12 +258,21 @@ public final class SmartPlacement {
         boolean fedLeft,
         boolean fedRight
     ) {
-        return switch (shape) {
-            case STRAIGHT -> fedStraight;
-            case TURN_LEFT -> fedLeft;
-            case TURN_RIGHT -> fedRight;
-        };
+        switch (shape) {
+            case STRAIGHT:
+                return fedStraight;
+
+            case TURN_LEFT:
+                return fedLeft;
+
+            case TURN_RIGHT:
+                return fedRight;
+
+            default:
+                return false; // defensive, should never happen if enum is complete
+        }
     }
+
 
     // -------------------------
     // Connectivity helpers
@@ -257,14 +288,14 @@ public final class SmartPlacement {
 
         if (!grid.inBoundsCell(nx, ny)) return false;
 
-        var neighbor = world.getEntity(nx, ny);
+        TileEntity neighbor = world.getEntity(nx, ny);
         if (neighbor == null) return false;
 
         // Direction from neighbor to this cell.
         Dir outFromNeighbor = fromEdgeIntoThis.opposite();
 
         // Sellpad should never be treated as an output source.
-        if (neighbor instanceof org.gudu0.AwareMemory.entities.SellpadEntity) return false;
+        if (neighbor instanceof SellpadEntity) return false;
 
         return neighbor.outputsTo(outFromNeighbor);
     }
