@@ -5,6 +5,12 @@
   <set-configuration-property name="gdx.assetpath" value="assets"/>
   <source path="gwt"/>
   <source path=""/>
+  <extend-configuration-property name="gdx.reflect.include" value="org.gudu0.AwareMemory.WorldGrid$SaveData"/>
+  <extend-configuration-property name="gdx.reflect.include" value="org.gudu0.AwareMemory.WorldGrid$ItemSave"/>
+  <extend-configuration-property name="gdx.reflect.include" value="org.gudu0.AwareMemory.WorldGrid$TileSave"/>
+  <extend-configuration-property name="gdx.reflect.include" value="org.gudu0.AwareMemory.WorldGrid.SaveData"/>
+  <extend-configuration-property name="gdx.reflect.include" value="org.gudu0.AwareMemory.WorldGrid.ItemSave"/>
+  <extend-configuration-property name="gdx.reflect.include" value="org.gudu0.AwareMemory.WorldGrid.TileSave"/>
   <set-property-fallback name="user.agent" value="safari"/>
   <extend-property name="user.agent" values="safari"/>
 </module>

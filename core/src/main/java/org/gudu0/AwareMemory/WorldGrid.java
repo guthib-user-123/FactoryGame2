@@ -1,6 +1,8 @@
 package org.gudu0.AwareMemory;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Json;
 
@@ -151,17 +153,31 @@ public class WorldGrid {
         s.items = list.toArray(new ItemSave[0]);
 
 
-        Json json = new Json();
-        FileHandle fh = Gdx.files.local(name);
-        fh.writeString(json.prettyPrint(s), false);
+        Json json = createJson();
+        if (isWeb()) {
+            Preferences prefs = Gdx.app.getPreferences("saves");
+            prefs.putString(name, json.toJson(s, SaveData.class));
+            prefs.flush();
+        } else {
+            FileHandle fh = Gdx.files.local(name);
+            fh.writeString(json.toJson(s, SaveData.class), false);
+        }
     }
 
     public void loadWithTileWorld(String name) {
-        FileHandle fh = Gdx.files.local(name);
-        if (!fh.exists()) return;
-
-        Json json = new Json();
-        SaveData s = json.fromJson(SaveData.class, fh);
+        Json json = createJson();
+        SaveData s;
+        if (isWeb()) {
+            Preferences prefs = Gdx.app.getPreferences("saves");
+            if (!prefs.contains(name)) return;
+            String data = prefs.getString(name, "");
+            if (data.length() == 0) return;
+            s = json.fromJson(SaveData.class, data);
+        } else {
+            FileHandle fh = Gdx.files.local(name);
+            if (!fh.exists()) return;
+            s = json.fromJson(SaveData.class, fh);
+        }
 
         if (s.w != wCells || s.h != hCells) {
             throw new RuntimeException("Save dimensions mismatch. Save=" + s.w + "x" + s.h +
@@ -193,5 +209,15 @@ public class WorldGrid {
 
     public int getTileID(int x, int y) {
         return grid[x][y];
+    }
+
+    private boolean isWeb() {
+        return Gdx.app != null && Gdx.app.getType() == ApplicationType.WebGL;
+    }
+
+    private Json createJson() {
+        Json json = new Json();
+        json.setTypeName(null);
+        return json;
     }
 }

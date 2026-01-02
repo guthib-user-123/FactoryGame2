@@ -14,11 +14,17 @@
           e.preventDefault();
         }
         document.addEventListener("contextmenu", preventContextMenu);
-        document.addEventListener("keydown", function (e) {
-          if (e.key === "F3") {
-            e.preventDefault();
+        function blockKeys(e) {
+          var key = e.key;
+          var code = e.keyCode;
+          if (key === "F3" || key === "F5" || key === "F9" || code === 114 || code === 116 || code === 120) {
+            if (e.cancelable) {
+              e.preventDefault();
+            }
           }
-        });
+        }
+        window.addEventListener("keydown", blockKeys, true);
+        window.addEventListener("keyup", blockKeys, true);
       })();
     </script>
     <script type="text/javascript" src="html/html.nocache.js"></script>

@@ -225,6 +225,9 @@ public class Main extends ApplicationAdapter {
                 return true;
             }
         });
+        Gdx.input.setCatchKey(Input.Keys.F3, true);
+        Gdx.input.setCatchKey(Input.Keys.F5, true);
+        Gdx.input.setCatchKey(Input.Keys.F9, true);
 
 
         // Enable alpha
@@ -717,10 +720,12 @@ public class Main extends ApplicationAdapter {
     private int worldCellsY() { return world.hCells; }
 
     private void saveGame() {
+        Gdx.app.log("Save", "Saving to save2");
         world.saveWithTileWorld("save2", tileWorld);
     }
 
     private void loadGame() {
+        Gdx.app.log("Save", "Loading from save2");
         world.loadWithTileWorld("save2");
 
         // rebuild entities from tiles/rots
@@ -1133,6 +1138,7 @@ public class Main extends ApplicationAdapter {
                 tileWorld.rebuildEntityAt(hoverCellX, hoverCellY);
             }
         }
+
 
         // Right click = delete
         if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
