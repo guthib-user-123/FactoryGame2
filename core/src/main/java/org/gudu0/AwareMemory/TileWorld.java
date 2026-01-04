@@ -23,7 +23,6 @@ public final class TileWorld {
     private int nextItemId = 1;
     private final Map<Integer, Item> items = new HashMap<>();
 
-
     public TileWorld(WorldGrid world) {
         this.world = world;
         this.entities = new TileEntity[world.wCells][world.hCells];
@@ -46,7 +45,6 @@ public final class TileWorld {
             }
         }
     }
-
 
     // Called by placement code (normal path)
     public void rebuildEntityAt(int cx, int cy) {
@@ -276,7 +274,7 @@ public final class TileWorld {
         return world;
     }
 
-    private final OrderManager orders = new OrderManager(3); // keep 3 active
+    private final OrderManager orders = new OrderManager(50); // keep 3 active
 
     public OrderManager getOrders() {
         return orders;
@@ -289,8 +287,6 @@ public final class TileWorld {
     public float getMoney() {
         return money;
     }
-
-
 
     // Money is owned by TileWorld (single source of truth).
     private float money = 0f;

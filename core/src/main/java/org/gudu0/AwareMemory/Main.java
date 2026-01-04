@@ -1,9 +1,6 @@
 package org.gudu0.AwareMemory;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -170,6 +167,9 @@ public class Main extends ApplicationAdapter {
     private Texture rodTex;
     private Texture machinePartsTex;
 
+    private InputMultiplexer inputMux;
+
+
     // TO ADD A NEW MACHINE
     {
         /*
@@ -195,20 +195,13 @@ public class Main extends ApplicationAdapter {
         player = new PlayerSystem(playerTex, world);
         tileWorld = new TileWorld(world);
         hud = new Hud();
-        tileWorld.addMoney(9999990.0f); // temp test starting money
+        tileWorld.addMoney(999.0f); // temp test starting money
 
         ArrayList<Order> milestones = new ArrayList<>();
         milestones.add(Order.sellItems("sell_10_any", "First Sales", "Sell 10 items.", 100, -1, 10));
         milestones.add(Order.processInMachine("roll_20", "Rods", "Make 20 rods in a Roller.", 250, WorldGrid.TILE_ROLLER, ItemType.ROD.ordinal(), 20));
         int targetMoney = (int) tileWorld.getMoney() + 100;
-
-        milestones.add(Order.reachMoney(
-            "money_1000",
-            "Savings",
-            "Reach $" + targetMoney + "!",
-            400,
-            targetMoney
-        ));
+        milestones.add(Order.reachMoney("money_1000", "Savings", "Reach $" + targetMoney + "!", 400, targetMoney));
 
         tileWorld.getOrders().setMilestones(milestones);
 
@@ -236,14 +229,36 @@ public class Main extends ApplicationAdapter {
         pm.dispose();
         whiteRegion = new TextureRegion(whiteTex);
 
+
         // Scrollwheel
-        Gdx.input.setInputProcessor(new InputAdapter() {
+        inputMux = new InputMultiplexer();
+
+        // Orders scroll adapter (priority)
+        inputMux.addProcessor(new InputAdapter() {
+            @Override
+            public boolean scrolled(float amountX, float amountY) {
+                if (!hud.isOrdersPanelOpen()) return false;
+
+                Vector2 hm = getHudMouse();
+                if (!hud.isOverOrdersPanel(hm.x, hm.y)) return false;
+
+                hud.scrollOrders(amountY, tileWorld.getOrders());
+                return true; // consume wheel
+            }
+        });
+
+        // Hotbar scroll adapter (fallback)
+        inputMux.addProcessor(new InputAdapter() {
             @Override
             public boolean scrolled(float amountX, float amountY) {
                 scrollDelta += (int) Math.signum(amountY);
-                return true;
+                return true; // keep current behavior
             }
         });
+
+        Gdx.input.setInputProcessor(inputMux);
+
+
         Gdx.input.setCatchKey(Input.Keys.F3, true);
         Gdx.input.setCatchKey(Input.Keys.F5, true);
         Gdx.input.setCatchKey(Input.Keys.F9, true);
@@ -714,7 +729,7 @@ public class Main extends ApplicationAdapter {
 
             int claimIndex = hud.ordersClaimButtonAt(hm.x, hm.y, tileWorld.getOrders());
             if (claimIndex != -1) {
-                int reward = tileWorld.getOrders().tryClaimActiveIndex(claimIndex);
+                int reward = tileWorld.getOrders().tryClaimActiveIndex(claimIndex, tileWorld.getTick(), tileWorld.getMoney());
                 if (reward > 0) {
                     tileWorld.addMoney(reward);
                 }
@@ -1306,4 +1321,5 @@ public class Main extends ApplicationAdapter {
         }
         return out;
     }
+
 }

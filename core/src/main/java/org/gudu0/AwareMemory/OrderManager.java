@@ -15,7 +15,7 @@ import java.util.List;
 public final class OrderManager {
 
     /** How many orders you want visible at once. */
-    private final int desiredActiveCount;
+    private final int maxActiveOrders;
 
     /** Milestones in order. */
     private final ArrayList<Order> milestoneQueue = new ArrayList<>();
@@ -26,9 +26,13 @@ public final class OrderManager {
     /** Index into milestoneQueue for the next order to activate. */
     private int nextMilestoneIndex = 0;
 
-    public OrderManager(int desiredActiveCount) {
-        this.desiredActiveCount = desiredActiveCount;
+    public OrderManager(int maxActiveOrders) {
+        this.maxActiveOrders = maxActiveOrders;
     }
+
+    private final OrderGenerator generator = new OrderGenerator();
+    private boolean autoGenerate = true; // you can toggle this later if you want
+
 
     // -------------------------
     // Public accessors (UI reads these)
@@ -55,11 +59,12 @@ public final class OrderManager {
 
         // Fill initial active orders.
         refillActiveOrders(0);
+        generateOrdersIfNeeded(0, 0f);
     }
 
     /** Makes sure activeOrders has up to desiredActiveCount items. */
     private void refillActiveOrders(long currentTick) {
-        while (activeOrders.size() < desiredActiveCount && nextMilestoneIndex < milestoneQueue.size()) {
+        while (activeOrders.size() < maxActiveOrders && nextMilestoneIndex < milestoneQueue.size()) {
             Order o = milestoneQueue.get(nextMilestoneIndex++);
             o.createdTick = currentTick;
             activeOrders.add(o);
@@ -145,8 +150,9 @@ public final class OrderManager {
      * <p>
      * UI should call this when player clicks "Claim".
      */
-    public int tryClaimActiveIndex(int activeIndex) {
+    public int tryClaimActiveIndex(int activeIndex, long currentTick, float currentMoney) {
         if (activeIndex < 0 || activeIndex >= activeOrders.size()) return 0;
+
         Order o = activeOrders.get(activeIndex);
 
         if (!o.completed) return 0;
@@ -154,10 +160,44 @@ public final class OrderManager {
 
         o.claimed = true;
 
-        // After claiming, we can activate the next milestone.
-        // We do NOT remove claimed orders immediately; UI can decide whether to hide them.
-        refillActiveOrders(o.createdTick);
+        int reward = o.rewardMoney;
 
-        return o.rewardMoney;
+        generator.onOrderClaimed();
+        // NEW behavior: remove it immediately and replace with the next milestone(s)
+        cleanupClaimedAndRefill(currentTick);      // your existing function
+        generateOrdersIfNeeded(currentTick, currentMoney);
+        return reward;
     }
+
+
+    /**
+     * Remove any claimed orders from the active list, then pull in new milestones
+     * until we have desiredActiveCount active again.
+     * <p>
+     * Call this after a claim, or occasionally if you want it to self-heal.
+     */
+    private void cleanupClaimedAndRefill(long currentTick) {
+        // Remove claimed orders (iterate backwards to avoid index shifting)
+        for (int i = activeOrders.size() - 1; i >= 0; i--) {
+            if (activeOrders.get(i).claimed) {
+                activeOrders.remove(i);
+            }
+        }
+
+        // Add new milestones to get back to desired count
+        refillActiveOrders(currentTick);
+    }
+
+    private void generateOrdersIfNeeded(long currentTick, float currentMoney) {
+        if (!autoGenerate) return;
+
+        while (activeOrders.size() < maxActiveOrders) {
+            Order o = generator.generateNext(currentTick, currentMoney, activeOrders);
+
+            o.createdTick = currentTick;
+            activeOrders.add(o);
+        }
+    }
+
+
 }

@@ -5,6 +5,9 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import org.gudu0.AwareMemory.entities.FilterEntity;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
+
 
 import java.util.List;
 
@@ -44,6 +47,9 @@ public class Hud {
     private final float ordersPanelH = 640f;
     private final float ordersPanelX = 1920f - ordersPanelW - 20f; // right side
     private final float ordersPanelY = 1080f - ordersPanelH - 20f; // top padding
+    // Orders list scrolling (pixels). 0 = top.
+    private float ordersScrollPx = 0f;
+
 
 
     // Returns the Y (bottom) of the first row's value box
@@ -75,7 +81,7 @@ public class Hud {
         return false;
     }
 
-    private boolean isOverOrdersPanel(float hudX, float hudY) {
+    public boolean isOverOrdersPanel(float hudX, float hudY) {
         return hudX >= ordersPanelX && hudX <= ordersPanelX + ordersPanelW
             && hudY >= ordersPanelY && hudY <= ordersPanelY + ordersPanelH;
     }
@@ -171,7 +177,6 @@ public class Hud {
         return org.gudu0.AwareMemory.ItemType.values()[rule].name();
     }
 
-
     public Hud() {
         cam = new OrthographicCamera();
         cam.setToOrtho(false, 1920, 1080);
@@ -183,7 +188,6 @@ public class Hud {
         smallFont = new BitmapFont();
         smallFont.getData().setScale(1.0f);
     }
-
 
     private static String tileName(int tileId) {
         switch (tileId) {
@@ -205,7 +209,9 @@ public class Hud {
 
     public void toggleOrdersPanel() {
         ordersOpen = !ordersOpen;
+        if (ordersOpen) ordersScrollPx = 0f;
     }
+
 
     public boolean isOrdersPanelOpen() {
         return ordersOpen;
@@ -215,11 +221,7 @@ public class Hud {
         ordersOpen = false;
     }
 
-    public void drawOrdersPanel(SpriteBatch batch,
-                                OrderManager orders,
-                                float currentMoney,
-                                TextureRegion white)
-    {
+    public void drawOrdersPanel(SpriteBatch batch, OrderManager orders, float currentMoney, TextureRegion white) {
         if (!ordersOpen) return;
 
         batch.setProjectionMatrix(cam.combined);
@@ -237,11 +239,31 @@ public class Hud {
         float contentX = ordersPanelX + 16f;
         float contentW = ordersPanelW - 32f;
 
-        float y = ordersPanelY + ordersPanelH - 90f; // start under header
+        float listTop = ordersListTopY();
+        float listBottom = ordersListBottomY();
+
+        float y = listTop + ordersScrollPx; // <-- scroll moves content up as scroll increases
         float cardH = 110f;
         float gap = 10f;
 
-        List<Order> list = orders.getActiveOrdersReadOnly(); // active milestone orders :contentReference[oaicite:2]{index=2}
+        // --- Clip the scrolling list so cards never render outside the panel ---
+        // This is the real fix for "spilling past the bottom".
+        batch.flush();
+
+        Rectangle clipBounds = new Rectangle(
+            contentX,
+            listBottom,
+            contentW,
+            listTop - listBottom
+        );
+
+        Rectangle scissors = new Rectangle();
+        ScissorStack.calculateScissors(cam, batch.getTransformMatrix(), clipBounds, scissors);
+        ScissorStack.pushScissors(scissors);
+
+
+
+        List<Order> list = orders.getActiveOrdersReadOnly(); // active milestone orders
         if (list.isEmpty()) {
             smallFont.draw(batch, "No active orders.", contentX, y);
             batch.end();
@@ -249,7 +271,19 @@ public class Hud {
         }
 
         for (int i = 0; i < list.size(); i++) {
-            Order o = list.get(i); // Order has progressText/progress01 helpers :contentReference[oaicite:3]{index=3}
+            Order o = list.get(i); // Order has progressText/progress01 helpers
+            float cardTop = y;
+            float cardBottom = y - cardH;
+
+            // Skip drawing if this card is fully above the visible list area
+            if (cardBottom > listTop) {
+                y -= (cardH + gap);
+                continue;
+            }
+
+                 // Stop if we've gone below the visible list area (everything else will be lower too)
+            if (cardTop < listBottom) break;
+
 
             // Card background
             batch.setColor(0.12f, 0.12f, 0.12f, 0.95f);
@@ -317,14 +351,13 @@ public class Hud {
             // Stop drawing if we run off the panel (scroll later)
             if (y < ordersPanelY + 20f) break;
         }
+        batch.flush();
+        ScissorStack.popScissors();
 
         batch.end();
     }
 
-
-    public void draw(SpriteBatch batch, float money, int itemCount, int page, int slot, int hoverSlot, int[] pageTiles, TextureRegion[] iconByTileId, TextureRegion white, float[] costByTile)
-    {
-
+    public void draw(SpriteBatch batch, float money, int itemCount, int page, int slot, int hoverSlot, int[] pageTiles, TextureRegion[] iconByTileId, TextureRegion white, float[] costByTile) {
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
         uiFont.draw(batch, "Money: $" + (Math.round(money * 10f) / 10f), 20, 1060);
@@ -437,11 +470,14 @@ public class Hud {
     public int ordersClaimButtonAt(float hudX, float hudY, OrderManager orders) {
         if (!ordersOpen) return -1;
         if (!isOverOrdersPanel(hudX, hudY)) return -1;
+        // Only allow clicking within the scrollable list area (not header/footer).
+        if (hudY > ordersListTopY() || hudY < ordersListBottomY()) return -1;
+
 
         float contentX = ordersPanelX + 16f;
         float contentW = ordersPanelW - 32f;
 
-        float y = ordersPanelY + ordersPanelH - 90f;
+        float y = ordersListTopY() + ordersScrollPx;
         float cardH = 110f;
         float gap = 10f;
 
@@ -464,7 +500,7 @@ public class Hud {
             }
 
             y -= (cardH + gap);
-            if (y < ordersPanelY + 20f) break;
+            if (y < ordersListBottomY()) break;
         }
 
         return -1;
@@ -478,4 +514,45 @@ public class Hud {
     public void dispose() {
         uiFont.dispose();
     }
+
+    // Top of the list area (below title)
+    private float ordersListTopY() { return ordersPanelY + ordersPanelH - 90f; }
+    // Bottom padding inside the panel
+    private float ordersListBottomY() { return ordersPanelY + 20f; }
+    // Visible height for the scrolling list
+    private float ordersListViewportH() { return ordersListTopY() - ordersListBottomY(); }
+
+    private static float clamp(float v, float lo, float hi) {
+        if (v < lo) return lo;
+        if (v > hi) return hi;
+        return v;
+    }
+
+    private float ordersContentHeight(int orderCount) {
+        float cardH = 110f;
+        float gap = 10f;
+        if (orderCount <= 0) return 0f;
+        return orderCount * cardH + (orderCount - 1) * gap;
+    }
+
+    private float ordersMaxScroll(OrderManager orders) {
+        int n = orders.getActiveOrdersReadOnly().size();
+        float content = ordersContentHeight(n);
+        float view = ordersListViewportH();
+        return Math.max(0f, content - view);
+    }
+
+    /**
+     * Call this when mouse wheel scroll happens while hovering the orders panel.
+     * wheelAmountY is the LibGDX scroll amount (typically +/- 1 per notch).
+     */
+    public void scrollOrders(float wheelAmountY, OrderManager orders) {
+        float pixelsPerNotch = 40f;
+
+        // wheelAmountY > 0 usually means "scroll down" (show later items)
+        ordersScrollPx += wheelAmountY * pixelsPerNotch;
+
+        ordersScrollPx = clamp(ordersScrollPx, 0f, ordersMaxScroll(orders));
+    }
+
 }
