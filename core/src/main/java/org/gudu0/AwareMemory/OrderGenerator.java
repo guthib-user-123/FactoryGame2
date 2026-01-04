@@ -111,7 +111,9 @@ public final class OrderGenerator {
     // ---------------- Internals ----------------
 
     private Order generateOne(int tier, float currentMoney) {
-        String id = String.format(Locale.ROOT, "auto_%04d", nextAutoId++);
+        int nextAutoIDForFormat = nextAutoId++;
+        String id = "auto_" + pad4(nextAutoIDForFormat);
+
 
         int pick = pickWeighted(wSell, wProcess, wMoney, wPlace);
 
@@ -122,6 +124,15 @@ public final class OrderGenerator {
             default: return makePlaceOrder(id, tier);
         }
     }
+    private static String pad4(int n) {
+        // 0..9999 -> 0000..9999 (and keeps extra digits if bigger)
+        if (n < 0) n = -n; // optional; remove if negatives should keep '-'
+        if (n < 10)   return "000" + n;
+        if (n < 100)  return "00" + n;
+        if (n < 1000) return "0" + n;
+        return Integer.toString(n);
+    }
+
 
     /**
      * Returns 0..3 matching the weights in order: sell, process, money, place.
