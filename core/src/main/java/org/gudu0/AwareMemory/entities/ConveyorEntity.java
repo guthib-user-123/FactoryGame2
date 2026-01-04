@@ -7,7 +7,7 @@ import org.gudu0.AwareMemory.TileWorld;
 
 public final class ConveyorEntity extends TileEntity {
     // Tune later; “passes per tick”
-    public float subcellsPerSecond = 100f; // start here (≈ 12/5 = 2.4 tiles/sec)
+    public float subcellsPerSecond = 24f; // start here (≈ 12/5 = 2.4 tiles/sec)
     private float moveAcc = 0f;
 
 

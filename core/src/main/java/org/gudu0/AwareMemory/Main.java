@@ -16,12 +16,11 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-import org.gudu0.AwareMemory.entities.ConveyorEntity;
-import org.gudu0.AwareMemory.entities.FilterEntity;
-import org.gudu0.AwareMemory.entities.SplitterEntity;
+import org.gudu0.AwareMemory.entities.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 
 
 @SuppressWarnings({"FieldMayBeFinal", "UnusedAssignment", "PatternVariableCanBeUsed", "EnhancedSwitchMigration"})
@@ -40,8 +39,6 @@ public class Main extends ApplicationAdapter {
     private Viewport viewport;
     private SpriteBatch batch;
 
-    @SuppressWarnings("FieldCanBeLocal")
-    private OrthographicCamera hudCamera;
     private Viewport hudViewport;
     private final Vector2 tmpHud = new Vector2();
 
@@ -211,8 +208,7 @@ public class Main extends ApplicationAdapter {
         viewport = new FitViewport(1920, 1080, camera);
         viewport.apply(true);
 
-        hudCamera = new OrthographicCamera();
-        hudViewport = new FitViewport(1920f, 1080f, hudCamera);
+        hudViewport = new FitViewport(1920f, 1080f, hud.cam);
         hudViewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
 
 
@@ -473,6 +469,7 @@ public class Main extends ApplicationAdapter {
         if (debugOverlay) {
             drawDebugOverlay();
         }
+        hudViewport.apply();
         hotbarHoverSlot = hud.slotAt(hm.x, hm.y);
         hud.draw(batch,
             tileWorld.getMoney(),
@@ -490,7 +487,7 @@ public class Main extends ApplicationAdapter {
             hud.drawFilterPanel(batch, editingFilter, whiteRegion);
         }
 
-        hud.drawOrdersPanel(batch, tileWorld.getOrders(), tileWorld.getMoney(), whiteRegion);
+        hud.drawOrdersPanel(batch, tileWorld.getOrders(), tileWorld.getMoney(), whiteRegion, hudViewport);
 
 
     }
@@ -1051,7 +1048,7 @@ public class Main extends ApplicationAdapter {
         anim.setPlayMode(Animation.PlayMode.LOOP);
         return anim;
     }
-    @SuppressWarnings("DataFlowIssue")
+    @SuppressWarnings({"DataFlowIssue", "DuplicateBranchesInSwitch"})
     public void doPlacedTilesDraw() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -1097,10 +1094,11 @@ public class Main extends ApplicationAdapter {
                                 int correctedRot = (idx == 0) ? ((inRot + 1) & 3) : ((inRot + 3) & 3);
 
                                 batch.draw(conveyorTurn[correctedRot][1 - idx], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
+                                break;
                             }
                             case TURN_RIGHT: {
                                 // input side relative to output
-                                Dir in = (c.getShape() == ConveyorEntity.Shape.TURN_LEFT) ? out.left() : out.right();
+                                @SuppressWarnings("ConstantValue") Dir in = (c.getShape() == ConveyorEntity.Shape.TURN_LEFT) ? out.left() : out.right();
 
                                 int inRot = dirToRot(in);
 
@@ -1114,6 +1112,7 @@ public class Main extends ApplicationAdapter {
                                 int correctedRot = (idx == 0) ? ((inRot + 1) & 3) : ((inRot + 3) & 3);
 
                                 batch.draw(conveyorTurn[correctedRot][1 - idx], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
+                                break;
                             }
                         }
                     } else {
@@ -1121,16 +1120,30 @@ public class Main extends ApplicationAdapter {
                         batch.draw(frame, drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
                     }
                 } else if (id == WorldGrid.TILE_MERGER) {
-                    int variant = mergerVariantAt(x, y, outRot);
+                    int variantIdx = 0;
 
-                    batch.draw(mergerSprite[outRot][variant], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
+                    TileEntity te = tileWorld.getEntity(x, y);
+                    if (te instanceof MergerEntity) {
+                        MergerEntity m = (MergerEntity) te;
+                        switch (m.getVariant()) {
+                            case LR: variantIdx = 0; break;
+                            case BR: variantIdx = 1; break;
+                            case BL: variantIdx = 2; break;
+                        }
+                    } else {
+                        // fallback if something ever renders without an entity
+                        variantIdx = mergerVariantAt(x, y, outRot);
+                    }
+
+                    batch.draw(mergerSprite[outRot][variantIdx], drawX, drawY, WorldGrid.CELL, WorldGrid.CELL);
+
                     if (debugOverlay) {
                         batch.end();
 
                         batch.setProjectionMatrix(camera.combined);
                         batch.begin();
 
-                        hud.drawMergervariant(batch, variant, drawX, drawY);
+                        hud.drawMergervariant(batch, variantIdx, drawX, drawY);
 
                         batch.end();
                         batch.begin();
@@ -1156,6 +1169,7 @@ public class Main extends ApplicationAdapter {
         }
 
         batch.end();
+        drawPortsOverlayForAllPlacedTiles();
     }
 
     private int mergerVariantAt(int x, int y, int outRot) {
@@ -1322,4 +1336,183 @@ public class Main extends ApplicationAdapter {
         return out;
     }
 
+    private static final float PORT_ALPHA = 0.55f;
+
+    // Draw one little square on the 5×5 grid along an edge.
+    // (east marker is the subcell at (4,2), west at (0,2), north at (2,4), south at (2,0))
+    private void drawPortMarker(float drawX, float drawY, Dir side, boolean isInput) {
+        float sub = WorldGrid.CELL / 5f;     // 5×5 subcells
+        float size = sub;                   // marker size (1 subcell)
+
+        float px = drawX;
+        float py = drawY;
+
+        switch (side) {
+            case EAST:  px += 4f * sub; py += 2f * sub; break;
+            case WEST:  px += 0f * sub; py += 2f * sub; break;
+            case NORTH: px += 2f * sub; py += 4f * sub; break;
+            case SOUTH: px += 2f * sub; py += 0f * sub; break;
+        }
+
+        if (isInput) {
+            shapes.setColor(0.2f, 1.0f, 0.2f, PORT_ALPHA); // green-ish
+        } else {
+            shapes.setColor(1.0f, 0.2f, 0.2f, PORT_ALPHA); // red-ish
+        }
+
+        shapes.rect(px, py, size, size);
+    }
+
+    private void computePortsForTile(int x, int y, EnumSet<Dir> inputs, EnumSet<Dir> outputs) {
+        inputs.clear();
+        outputs.clear();
+
+        int id = world.grid[x][y];
+        if (id == WorldGrid.TILE_EMPTY) return;
+
+        int outRot = world.rot[x][y];
+        Dir out = Dir.fromRot(outRot);
+
+        TileEntity te = tileWorld.getEntity(x, y);
+
+        // --- Logistics tiles (exact) ---
+        if (te instanceof ConveyorEntity) {
+            ConveyorEntity c = (ConveyorEntity) te;
+
+            outputs.add(out);
+
+            switch (c.getShape()) {
+                case STRAIGHT:
+                    inputs.add(out.opposite());
+                    break;
+                case TURN_LEFT:
+                    inputs.add(out.left());
+                    break;
+                case TURN_RIGHT:
+                    inputs.add(out.right());
+                    break;
+            }
+            return;
+        }
+
+        if (te instanceof MergerEntity) {
+            MergerEntity m = (MergerEntity) te;
+
+            outputs.add(out);
+
+            switch (m.getVariant()) {
+                case LR:
+                    inputs.add(out.left());
+                    inputs.add(out.right());
+                    break;
+                case BL:
+                    inputs.add(out.opposite());
+                    inputs.add(out.left());
+                    break;
+                case BR:
+                    inputs.add(out.opposite());
+                    inputs.add(out.right());
+                    break;
+            }
+            return;
+        }
+
+        if (te instanceof SplitterEntity) {
+            SplitterEntity s = (SplitterEntity) te;
+
+            inputs.add(out.opposite());
+
+            switch (s.getVariant()) {
+                case FL:
+                    outputs.add(out);
+                    outputs.add(out.left());
+                    break;
+                case FR:
+                    outputs.add(out);
+                    outputs.add(out.right());
+                    break;
+                case LR:
+                    outputs.add(out.left());
+                    outputs.add(out.right());
+                    break;
+            }
+            return;
+        }
+
+        if (te instanceof FilterEntity) {
+            // Your filter tiles are directional too; treat like splitter-style ports.
+            // Input is "back" relative to rot; outputs depend on variant.
+            FilterEntity f = (FilterEntity) te;
+
+            inputs.add(out.opposite());
+
+            switch (f.getVariant()) {
+                case FL:
+                    outputs.add(out);
+                    outputs.add(out.left());
+                    break;
+                case FR:
+                    outputs.add(out);
+                    outputs.add(out.right());
+                    break;
+                case LR:
+                    outputs.add(out.left());
+                    outputs.add(out.right());
+                    break;
+            }
+            return;
+        }
+
+        // --- Machines (reasonable defaults) ---
+        // Spawner: output only
+        if (te instanceof SpawnerEntity) {
+            outputs.add(out);
+            return;
+        }
+
+        // Sellpad: input only
+        if (te instanceof SellpadEntity) {
+            inputs.add(out.left());
+            inputs.add(out.right());
+            inputs.add(out.opposite());
+            inputs.add(out);
+            return;
+        }
+
+        // Most processors: input back, output forward
+        if (te != null) {
+            inputs.add(out.opposite());
+            outputs.add(out);
+        }
+    }
+
+    private void drawPortsOverlayForAllPlacedTiles() {
+        if (!debugOverlay) return;
+
+        EnumSet<Dir> inputs = EnumSet.noneOf(Dir.class);
+        EnumSet<Dir> outputs = EnumSet.noneOf(Dir.class);
+
+        shapes.setProjectionMatrix(camera.combined);
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+
+        for (int x = 0; x < worldCellsX(); x++) {
+            for (int y = 0; y < worldCellsY(); y++) {
+                if (world.grid[x][y] == WorldGrid.TILE_EMPTY) continue;
+
+                computePortsForTile(x, y, inputs, outputs);
+
+                float drawX = x * WorldGrid.CELL;
+                float drawY = y * WorldGrid.CELL;
+
+                for (Dir d : inputs)  drawPortMarker(drawX, drawY, d, true);
+                for (Dir d : outputs) drawPortMarker(drawX, drawY, d, false);
+            }
+        }
+
+        shapes.end();
+    }
 }

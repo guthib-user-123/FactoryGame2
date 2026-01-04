@@ -1,12 +1,16 @@
 package org.gudu0.AwareMemory;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import org.gudu0.AwareMemory.entities.FilterEntity;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
+import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.math.Vector3;
 
 
 import java.util.List;
@@ -42,6 +46,9 @@ public class Hud {
 
     // ---------------- Orders panel (HUD coords) ----------------
     private boolean ordersOpen = false;
+    private boolean ordersClipDebug = false;
+    private final Vector3 tmpVec3 = new Vector3();
+    private final Vector3 tmpVec3b = new Vector3();
 
     private final float ordersPanelW = 560f;
     private final float ordersPanelH = 640f;
@@ -182,11 +189,11 @@ public class Hud {
         cam.setToOrtho(false, 1920, 1080);
         cam.update();
 
-        uiFont = new BitmapFont();
-        uiFont.getData().setScale(2.5f);
+        uiFont = new BitmapFont(Gdx.files.internal("fonts/UI_large.fnt"));
+        uiFont.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.Linear);
 
-        smallFont = new BitmapFont();
-        smallFont.getData().setScale(1.0f);
+        smallFont = new BitmapFont(Gdx.files.internal("fonts/UI_small.fnt"));
+        smallFont.getRegion().getTexture().setFilter(TextureFilter.Linear, TextureFilter.Linear);
     }
 
     private static String tileName(int tileId) {
@@ -217,11 +224,8 @@ public class Hud {
         return ordersOpen;
     }
 
-    public void closeOrdersPanel() {
-        ordersOpen = false;
-    }
 
-    public void drawOrdersPanel(SpriteBatch batch, OrderManager orders, float currentMoney, TextureRegion white) {
+    public void drawOrdersPanel(SpriteBatch batch, OrderManager orders, float currentMoney, TextureRegion white, Viewport hudViewport) {
         if (!ordersOpen) return;
 
         batch.setProjectionMatrix(cam.combined);
@@ -256,9 +260,26 @@ public class Hud {
             contentW,
             listTop - listBottom
         );
+        tmpVec3.set(clipBounds.x, clipBounds.y, 0f);
+        tmpVec3b.set(clipBounds.x + clipBounds.width, clipBounds.y + clipBounds.height, 0f);
+        hudViewport.project(tmpVec3);
+        hudViewport.project(tmpVec3b);
 
-        Rectangle scissors = new Rectangle();
-        ScissorStack.calculateScissors(cam, batch.getTransformMatrix(), clipBounds, scissors);
+        float scX = Math.min(tmpVec3.x, tmpVec3b.x);
+        float scY = Math.min(tmpVec3.y, tmpVec3b.y);
+        float scW = Math.abs(tmpVec3b.x - tmpVec3.x);
+        float scH = Math.abs(tmpVec3b.y - tmpVec3.y);
+
+        float scaleX = (float) Gdx.graphics.getBackBufferWidth() / (float) Gdx.graphics.getWidth();
+        float scaleY = (float) Gdx.graphics.getBackBufferHeight() / (float) Gdx.graphics.getHeight();
+        if (scaleX != 1f || scaleY != 1f) {
+            scX *= scaleX;
+            scY *= scaleY;
+            scW *= scaleX;
+            scH *= scaleY;
+        }
+
+        Rectangle scissors = new Rectangle(scX, scY, scW, scH);
         ScissorStack.pushScissors(scissors);
 
 
@@ -353,6 +374,15 @@ public class Hud {
         }
         batch.flush();
         ScissorStack.popScissors();
+        if (ordersClipDebug) {
+            float t = 2f;
+            batch.setColor(1f, 0.15f, 0.15f, 0.9f);
+            batch.draw(white, clipBounds.x, clipBounds.y, clipBounds.width, t);
+            batch.draw(white, clipBounds.x, clipBounds.y + clipBounds.height - t, clipBounds.width, t);
+            batch.draw(white, clipBounds.x, clipBounds.y, t, clipBounds.height);
+            batch.draw(white, clipBounds.x + clipBounds.width - t, clipBounds.y, t, clipBounds.height);
+            batch.setColor(1f, 1f, 1f, 1f);
+        }
 
         batch.end();
     }

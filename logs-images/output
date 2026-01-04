@@ -1,0 +1,39 @@
+9:06:47 PM: Executing 'lwjgl3:run'…
+
+Exception in thread "main" com.badlogic.gdx.utils.GdxRuntimeException: Couldn't load file: fonts/UI.png
+	at com.badlogic.gdx.graphics.Pixmap.<init>(Pixmap.java:190)
+	at com.badlogic.gdx.graphics.TextureData$Factory.loadFromFile(TextureData.java:101)
+	at com.badlogic.gdx.graphics.Texture.<init>(Texture.java:126)
+	at com.badlogic.gdx.graphics.Texture.<init>(Texture.java:122)
+	at com.badlogic.gdx.graphics.g2d.BitmapFont.<init>(BitmapFont.java:169)
+	at com.badlogic.gdx.graphics.g2d.BitmapFont.<init>(BitmapFont.java:144)
+	at com.badlogic.gdx.graphics.g2d.BitmapFont.<init>(BitmapFont.java:116)
+	at com.badlogic.gdx.graphics.g2d.BitmapFont.<init>(BitmapFont.java:109)
+	at org.gudu0.AwareMemory.Hud.<init>(Hud.java:196)
+	at org.gudu0.AwareMemory.Main.create(Main.java:195)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window.initializeListener(Lwjgl3Window.java:464)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window.update(Lwjgl3Window.java:402)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application.loop(Lwjgl3Application.java:181)
+	at com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application.<init>(Lwjgl3Application.java:153)
+	at org.gudu0.AwareMemory.lwjgl3.Lwjgl3Launcher.createApplication(Lwjgl3Launcher.java:16)
+	at org.gudu0.AwareMemory.lwjgl3.Lwjgl3Launcher.main(Lwjgl3Launcher.java:12)
+Caused by: com.badlogic.gdx.utils.GdxRuntimeException: File not found: fonts\UI.png (Internal)
+	at com.badlogic.gdx.files.FileHandle.read(FileHandle.java:142)
+	at com.badlogic.gdx.files.FileHandle.readBytes(FileHandle.java:228)
+	at com.badlogic.gdx.graphics.Pixmap.<init>(Pixmap.java:187)
+	... 15 more
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':lwjgl3:run'.
+> Process 'command 'C:\Program Files\Eclipse Adoptium\jdk-21.0.9.10-hotspot\bin\java.exe'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s
+9:06:49 PM: Execution finished 'lwjgl3:run'.
