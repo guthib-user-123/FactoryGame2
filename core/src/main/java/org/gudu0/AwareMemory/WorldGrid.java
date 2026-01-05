@@ -7,8 +7,8 @@ import com.badlogic.gdx.utils.Json;
 
 @SuppressWarnings("EnhancedSwitchMigration")
 public class WorldGrid {
-    public static int GRID_W = 30;
-    public static int GRID_H = 30;
+    public static int GRID_W = 35;
+    public static int GRID_H = 35;
     public static final int CELL = 32;
 
     public static final int TILE_EMPTY = 0;

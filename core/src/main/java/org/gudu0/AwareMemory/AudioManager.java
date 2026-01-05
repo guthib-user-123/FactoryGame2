@@ -2,6 +2,7 @@ package org.gudu0.AwareMemory;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.ObjectMap;
 
 @SuppressWarnings("unused")
@@ -69,7 +70,7 @@ public final class AudioManager {
 
     private Sound loadSoundOptional(String path) {
         try {
-            var fh = Gdx.files.internal(path);
+            FileHandle fh = Gdx.files.internal(path);
 
             // This check is nice, but still keep try/catch because some backends can throw anyway.
             if (!fh.exists()) {
