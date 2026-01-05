@@ -274,7 +274,7 @@ public final class TileWorld {
         return world;
     }
 
-    private final OrderManager orders = new OrderManager(5); // keep 3 active
+    public  OrderManager orders = new OrderManager(5); // keep 3 active
 
     public OrderManager getOrders() {
         return orders;

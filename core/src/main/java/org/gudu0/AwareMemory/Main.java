@@ -29,6 +29,8 @@ public class Main extends ApplicationAdapter {
     private PlayerSystem player;
     private TileWorld tileWorld;
     private Hud hud;
+    private AudioManager audio;
+
 
     private ShapeRenderer shapes;
     private final Vector3 mouse = new Vector3();
@@ -164,8 +166,10 @@ public class Main extends ApplicationAdapter {
     private Texture rodTex;
     private Texture machinePartsTex;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private InputMultiplexer inputMux;
 
+    public boolean drawPortOverlay = true;
 
     // TO ADD A NEW MACHINE
     {
@@ -186,13 +190,36 @@ public class Main extends ApplicationAdapter {
     @SuppressWarnings({"SpellCheckingInspection"})
     @Override
     public void create() {
-        Gdx.app.setLogLevel(com.badlogic.gdx.Application.LOG_DEBUG);
+        Gdx.app.setLogLevel(Application.LOG_ERROR);
         world = new WorldGrid();
         playerTex = new Texture(Gdx.files.internal("player.png"));
         player = new PlayerSystem(playerTex, world);
         tileWorld = new TileWorld(world);
         hud = new Hud();
+        audio = new AudioManager();
+        audio.load();
         tileWorld.addMoney(999.0f); // temp test starting money
+
+        hud.addToggle("Show port overlay", new Hud.BoolGetter() {
+            @Override public boolean get() { return drawPortOverlay; }
+        }, new Hud.BoolSetter() {
+            @Override public void set(boolean v) { drawPortOverlay = v; }
+        });
+
+        hud.addToggle("Disable Sound", new Hud.BoolGetter() {
+            @Override
+            public boolean get() {
+                return audio.getMute();
+            }
+        }, new Hud.BoolSetter() {
+            @Override public void set(boolean v) {audio.setMuted(v);}
+        });
+
+        hud.addIntOption("Max Active Orders", 1, 999,
+            () -> tileWorld.orders.maxActiveOrders,
+            (v) -> tileWorld.orders.setMaxActiveOrders(v)
+        );
+
 
         ArrayList<Order> milestones = new ArrayList<>();
         milestones.add(Order.sellItems("sell_10_any", "First Sales", "Sell 10 items.", 100, -1, 10));
@@ -201,8 +228,6 @@ public class Main extends ApplicationAdapter {
         milestones.add(Order.reachMoney("money_1000", "Savings", "Reach $" + targetMoney + "!", 400, targetMoney));
 
         tileWorld.getOrders().setMilestones(milestones);
-
-
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(1920, 1080, camera);
@@ -251,6 +276,22 @@ public class Main extends ApplicationAdapter {
                 return true; // keep current behavior
             }
         });
+
+        inputMux.addProcessor(new InputAdapter() {
+            @Override
+            public boolean keyTyped(char character) {
+                return hud.optionsKeyTyped(character);
+            }
+        });
+
+        inputMux.addProcessor(new InputAdapter() {
+            @Override
+            public boolean keyDown(int keycode) {
+                if (hud.optionsKeyDown(keycode)) return true;
+                return false;
+            }
+        });
+
 
         Gdx.input.setInputProcessor(inputMux);
 
@@ -488,6 +529,7 @@ public class Main extends ApplicationAdapter {
         }
 
         hud.drawOrdersPanel(batch, tileWorld.getOrders(), tileWorld.getMoney(), whiteRegion, hudViewport);
+        hud.drawOptionsMenu(batch, whiteRegion);
 
 
     }
@@ -496,6 +538,7 @@ public class Main extends ApplicationAdapter {
     public void resize(int width, int height) {
         viewport.update(width, height, true);      // world
         hudViewport.update(width, height, true);   // HUD
+        hud.recalcOptionsPanel();
     }
 
     @Override
@@ -514,6 +557,7 @@ public class Main extends ApplicationAdapter {
         machinePartsTex.dispose();
         whiteTex.dispose();
 
+        if (audio != null) audio.dispose();
 
         for (Texture t : conveyorTextures){
             t.dispose();
@@ -569,6 +613,79 @@ public class Main extends ApplicationAdapter {
         filter_FL_Textures.clear();
         filter_FR_Textures.clear();
         filter_LR_Textures.clear();
+    }
+
+    public void controls(){
+        // Claim order reward (mouse click on HUD button)
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            if (hud.isOrdersPanelOpen()) {
+
+                Vector2 hm = getHudMouse();
+
+                int claimIndex = hud.ordersClaimButtonAt(hm.x, hm.y, tileWorld.getOrders());
+                if (claimIndex != -1) {
+                    int reward = tileWorld.getOrders().tryClaimActiveIndex(claimIndex, tileWorld.getTick(), tileWorld.getMoney());
+                    if (reward > 0) {
+                        tileWorld.addMoney(reward);
+                        audio.playClaim();
+                    }
+                    audio.playClaim();
+                }
+            }
+            if (hud.isOptionsMenuOpen()) {
+                Vector2 hm = getHudMouse();
+                int idx = hud.optionsToggleAt(hm.x, hm.y);
+                if (idx >= 0) {
+                    hud.toggleOption(idx);
+                    return; // consume click
+                }
+                if (hud.isOptionsMenuOpen()) {
+                    if (hud.clickOptionsInt(hm.x, hm.y)) return;
+                }
+
+            }
+
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.C)) tileWorld.clearItems();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F4)){
+            saveGame();
+            Gdx.app.exit();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
+            if (Gdx.graphics.isFullscreen()) {
+                Gdx.graphics.setWindowedMode(1280, 720);
+            } else {
+                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+            }
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) saveGame();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F9)) {
+            loadGame();
+            // Second pass: now that all entities exist, refresh conveyor shapes everywhere
+            tileWorld.refreshAllConveyorShapes();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            // Spawn onto the hovered tile (if it has an entity)
+            if (hoverValid) {
+                int cx = hoverCellX, cy = hoverCellY;
+                int rot = world.rot[cx][cy];
+                Dir fwd = Dir.fromRot(rot);
+
+                // Conveyor accepts from BACK side, so spawn "coming from back"
+                Dir fromEdge = fwd.opposite();
+
+                tileWorld.spawnOnTile(cx, cy, ItemType.ORE, 1f, fromEdge);
+            }
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
+            debugOverlay = !debugOverlay;
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            hud.toggleOrdersPanel();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+            hud.toggleOptionsMenu();
+        }
     }
 
     private TextureRegion loadTurn(String path) {
@@ -719,58 +836,6 @@ public class Main extends ApplicationAdapter {
         shapes.end();
     }
 
-    public void controls(){
-        // Claim order reward (mouse click on HUD button)
-        if (hud.isOrdersPanelOpen() && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            Vector2 hm = getHudMouse();
-
-            int claimIndex = hud.ordersClaimButtonAt(hm.x, hm.y, tileWorld.getOrders());
-            if (claimIndex != -1) {
-                int reward = tileWorld.getOrders().tryClaimActiveIndex(claimIndex, tileWorld.getTick(), tileWorld.getMoney());
-                if (reward > 0) {
-                    tileWorld.addMoney(reward);
-                }
-            }
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.C)) tileWorld.clearItems();
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F4)){
-            saveGame();
-            Gdx.app.exit();
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
-            if (Gdx.graphics.isFullscreen()) {
-                Gdx.graphics.setWindowedMode(1280, 720);
-            } else {
-                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
-            }
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F5)) saveGame();
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F9)) {
-            loadGame();
-            // Second pass: now that all entities exist, refresh conveyor shapes everywhere
-            tileWorld.refreshAllConveyorShapes();
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            // Spawn onto the hovered tile (if it has an entity)
-            if (hoverValid) {
-                int cx = hoverCellX, cy = hoverCellY;
-                int rot = world.rot[cx][cy];
-                Dir fwd = Dir.fromRot(rot);
-
-                // Conveyor accepts from BACK side, so spawn "coming from back"
-                Dir fromEdge = fwd.opposite();
-
-                tileWorld.spawnOnTile(cx, cy, ItemType.ORE, 1f, fromEdge);
-            }
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
-            debugOverlay = !debugOverlay;
-        }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
-            hud.toggleOrdersPanel();
-        }
-    }
-
     private static float clamp(float v, float min, float max) { return Math.max(min, Math.min(max, v)); }
     private int worldCellsX() { return world.wCells; }
     private int worldCellsY() { return world.hCells; }
@@ -805,13 +870,6 @@ public class Main extends ApplicationAdapter {
         Gdx.app.log("LoadPerf", "smartPlacement:    " + (t3 - t2) + "ms");
         Gdx.app.log("LoadPerf", "applyItems:        " + (t4 - t3) + "ms");
         Gdx.app.log("LoadPerf", "TOTAL:             " + (t4 - t0) + "ms");
-
-//        System.out.println("loadWithTileWorld: " + (t1 - t0) + "ms");
-//        System.out.println("rebuildEntities:   " + (t2 - t1) + "ms");
-//        System.out.println("smartPlacement:    " + (t3 - t2) + "ms");
-//        System.out.println("extraShapes:       " + (t4 - t3) + "ms");
-//        System.out.println("applyItems:        " + (t5 - t4) + "ms");
-//        System.out.println("TOTAL:             " + (t5 - t0) + "ms");
     }
 
     @SuppressWarnings("SpellCheckingInspection")
@@ -1225,7 +1283,7 @@ public class Main extends ApplicationAdapter {
                 tileWorld.rebuildEntityAt(hoverCellX, hoverCellY);
                 int placedId = world.grid[hoverCellX][hoverCellY]; // includes auto-upgrade result
                 tileWorld.getOrders().onTilePlaced(placedId, tileWorld.getMoney(), tileWorld.getTick());
-
+                audio.playPlace();
             }
         }
 
@@ -1342,7 +1400,7 @@ public class Main extends ApplicationAdapter {
     // (east marker is the subcell at (4,2), west at (0,2), north at (2,4), south at (2,0))
     private void drawPortMarker(float drawX, float drawY, Dir side, boolean isInput) {
         float sub = WorldGrid.CELL / 5f;     // 5×5 subcells
-        float size = sub;                   // marker size (1 subcell)
+        @SuppressWarnings("UnnecessaryLocalVariable") float size = sub;                   // marker size (1 subcell)
 
         float px = drawX;
         float py = drawY;
@@ -1488,6 +1546,7 @@ public class Main extends ApplicationAdapter {
 
     private void drawPortsOverlayForAllPlacedTiles() {
         if (!debugOverlay) return;
+        if (!drawPortOverlay) return;
 
         EnumSet<Dir> inputs = EnumSet.noneOf(Dir.class);
         EnumSet<Dir> outputs = EnumSet.noneOf(Dir.class);

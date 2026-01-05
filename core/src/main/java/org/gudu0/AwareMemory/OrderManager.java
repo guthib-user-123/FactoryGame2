@@ -15,7 +15,7 @@ import java.util.List;
 public final class OrderManager {
 
     /** How many orders you want visible at once. */
-    private final int maxActiveOrders;
+    public int maxActiveOrders;
 
     /** Milestones in order. */
     private final ArrayList<Order> milestoneQueue = new ArrayList<>();
@@ -200,4 +200,7 @@ public final class OrderManager {
     }
 
 
+    public void setMaxActiveOrders(int v) {
+        this.maxActiveOrders = v;
+    }
 }
