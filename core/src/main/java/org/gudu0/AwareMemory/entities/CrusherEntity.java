@@ -38,7 +38,8 @@ public final class CrusherEntity extends TileEntity {
         // Tick processing timer first (deterministic: finish then attempt movement this tick)
         tickProcessing(world);
 
-        moveAcc += subcellsPerSecond * world.fixedDt();
+        moveAcc += subcellsPerSecond * world.fixedDt() * world.getItemSpeedMul();
+
         int passes = (int) moveAcc;
         if (passes <= 0) return;
         moveAcc -= passes;

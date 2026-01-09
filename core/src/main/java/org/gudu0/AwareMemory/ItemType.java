@@ -1,19 +1,24 @@
 package org.gudu0.AwareMemory;
 
 public enum ItemType {
-    ORE,
-    DUST,
-    INGOT,
-//    CRUSHED_ORE,
-    GEAR,
-    PLATE,
-    ROD,
-    MACHINE_PARTS;
+    ORE(0),
+    DUST(1),
+    INGOT(2),
+    PLATE(3),
+    ROD(4),
+    GEAR(5),
+    MACHINE_PARTS(6);
 
-    private static final ItemType[] VALUES = values();
-    private static final int SIZE = VALUES.length;
+    public final int saveId;
+    ItemType(int saveId) { this.saveId = saveId; }
 
-    public ItemType getNext(){
-        return VALUES[(this.ordinal() + 1) % SIZE];
+    private static final ItemType[] BY_ID = new ItemType[256];
+    static {
+        for (ItemType t : values()) BY_ID[t.saveId & 0xFF] = t;
+    }
+
+    public static ItemType fromSaveId(int id) {
+        ItemType t = BY_ID[id & 0xFF];
+        return (t != null) ? t : ORE; // safe fallback
     }
 }

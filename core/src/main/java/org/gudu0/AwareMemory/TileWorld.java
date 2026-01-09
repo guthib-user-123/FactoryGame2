@@ -23,6 +23,22 @@ public final class TileWorld {
     private int nextItemId = 1;
     private final Map<Integer, Item> items = new HashMap<>();
 
+    // TileWorld.java
+    private float itemSpeedMul = 1f; // 1.0 = normal
+
+    public float getItemSpeedMul() {
+        return itemSpeedMul;
+    }
+
+    public void setItemSpeedMul(float v) {
+        if (Float.isNaN(v) || Float.isInfinite(v)) v = 1f;
+
+        if (v < 0.05f) v = 0.05f;
+        if (v > 10f) v = 10f;
+
+        itemSpeedMul = v;
+    }
+
     public TileWorld(WorldGrid world) {
         this.world = world;
         this.entities = new TileEntity[world.wCells][world.hCells];
@@ -139,22 +155,42 @@ public final class TileWorld {
     }
 
     public void update(float dt) {
+        if (dt < 0f) dt = 0f;
+        if (dt > 0.25f) dt = 0.25f; // clamp huge spikes
+
         acc += dt;
-        while (acc >= FIXED_TICK) {
+
+        int steps = 0;
+        final int MAX_STEPS_PER_FRAME = 10;
+
+        while (acc >= FIXED_TICK && steps < MAX_STEPS_PER_FRAME) {
             tickOnce();
             acc -= FIXED_TICK;
+            steps++;
         }
+
+        // If we’re still behind, drop extra accumulated time
+        // (prevents “sim tries to catch up forever”)
+        if (steps == MAX_STEPS_PER_FRAME) acc = 0f;
     }
+
+    private String lastSimError = null;
+
+    public String getLastSimError() { return lastSimError; }
+    public void clearLastSimError() { lastSimError = null; }
 
     private void tickOnce() {
         tick++;
-
-        // Tile-centric update: deterministic grid scan (x-major or y-major; pick one)
-        for (int y = 0; y < world.hCells; y++) {
-            for (int x = 0; x < world.wCells; x++) {
-                TileEntity te = entities[x][y];
-                if (te != null) te.step(this, tick);
+        try {
+            for (int y = 0; y < world.hCells; y++) {
+                for (int x = 0; x < world.wCells; x++) {
+                    TileEntity te = entities[x][y];
+                    if (te != null) te.step(this, tick);
+                }
             }
+        } catch (Throwable t) {
+            lastSimError = t.getClass().getSimpleName() + ": " + t.getMessage();
+            throw t; // or DON'T throw if you want to keep running
         }
     }
 
@@ -354,11 +390,9 @@ public final class TileWorld {
                 if (te == null) continue;
                 if (te.occ[s.u][s.v] != TileEntity.EMPTY) continue;
 
-                ItemType[] types = ItemType.values();
                 int tid = s.typeId & 0xFF;
-                //noinspection ConstantValue
-                if (tid < 0 || tid >= types.length) continue;
-                ItemType type = types[tid];
+                ItemType type = ItemType.fromSaveId(tid);
+
 
 
                 Item it = new Item(s.id, type, s.value);
@@ -444,7 +478,7 @@ public final class TileWorld {
 
                         WorldGrid.ItemSave s = new WorldGrid.ItemSave();
                         s.id = it.id;
-                        s.typeId = (byte) it.type.ordinal();
+                        s.typeId = (byte) it.type.saveId;
                         s.value = it.value;
                         s.cx = x; s.cy = y;
                         s.u = u; s.v = v;

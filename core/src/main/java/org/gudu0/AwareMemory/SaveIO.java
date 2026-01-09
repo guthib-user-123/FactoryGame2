@@ -43,7 +43,7 @@ public final class SaveIO {
     private SaveIO() {}
 
     private static final int MAGIC = 0x46475331; // 'F' 'G' 'S' '1'
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     public static final class LoadedData {
         public int w, h;

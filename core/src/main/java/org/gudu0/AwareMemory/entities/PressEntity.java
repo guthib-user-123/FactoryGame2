@@ -8,7 +8,7 @@ public final class PressEntity extends TileEntity {
     private float moveAcc = 0f;
 
     // Processing
-    public float processTime = 1.25f; // tune
+    public float processTime = 1.75f; // tune
     private int processingItemId = EMPTY;
     private float remaining = 0f;
     private boolean done = false;
@@ -38,7 +38,8 @@ public final class PressEntity extends TileEntity {
         // Tick processing timer first (deterministic: finish then attempt movement this tick)
         tickProcessing(world);
 
-        moveAcc += subcellsPerSecond * world.fixedDt();
+        moveAcc += subcellsPerSecond * world.fixedDt() * world.getItemSpeedMul();
+
         int passes = (int) moveAcc;
         if (passes <= 0) return;
         moveAcc -= passes;

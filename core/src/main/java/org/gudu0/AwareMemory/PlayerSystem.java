@@ -11,7 +11,7 @@ public class PlayerSystem {
     public Texture tex;
     public float x, y;
 
-    public float speed = 220f;
+    public float speed = 300f;
     public float pushSpeed = 110f;
 
     public float centerStrength = 6.5f;

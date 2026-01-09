@@ -4,7 +4,7 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -13,8 +13,6 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 import org.gudu0.AwareMemory.entities.*;
 
@@ -218,6 +216,11 @@ public class Main extends ApplicationAdapter {
         hud.addIntOption("Max Active Orders", 1, 999,
             () -> tileWorld.orders.maxActiveOrders,
             (v) -> tileWorld.orders.setMaxActiveOrders(v)
+        );
+
+        hud.addIntOption("Item Speed (%)", 1, 1000,
+            () -> (int)(tileWorld.getItemSpeedMul() * 100f),
+            (v) -> tileWorld.setItemSpeedMul(v / 100f)
         );
 
 
@@ -463,6 +466,20 @@ public class Main extends ApplicationAdapter {
             iconByTileId[WorldGrid.TILE_MERGER] = mergerSprite[0][0];
 
         }
+
+        // sample placement.
+        int start = 30;
+        placeTile(start, start, 0, WorldGrid.TILE_SPAWNER);
+        placeTile(start + 1, start, 0, WorldGrid.TILE_CONVEYOR);
+        placeTile(start + 2, start, 0, WorldGrid.TILE_CRUSHER);
+        placeTile(start + 3, start, 0, WorldGrid.TILE_CONVEYOR);
+        placeTile(start + 4, start, 0, WorldGrid.TILE_SMELTER);
+        placeTile(start + 5, start, 0, WorldGrid.TILE_CONVEYOR);
+        placeTile(start + 6, start, 0, WorldGrid.TILE_PRESS);
+        placeTile(start + 7, start, 0, WorldGrid.TILE_CONVEYOR);
+        placeTile(start + 8, start, 0, WorldGrid.TILE_ROLLER);
+        placeTile(start + 9, start, 0, WorldGrid.TILE_CONVEYOR);
+        placeTile(start + 10, start, 0, WorldGrid.TILE_SELLPAD);
     }
 
     @Override
@@ -834,6 +851,12 @@ public class Main extends ApplicationAdapter {
         }
 
         shapes.end();
+        batch.begin();
+        if (tileWorld.getLastSimError() != null){
+            BitmapFont smallFont = hud.getSmallFont();
+
+            smallFont.draw(batch, tileWorld.getLastSimError(), 100.0f, 200.0f);
+        }
     }
 
     private static float clamp(float v, float min, float max) { return Math.max(min, Math.min(max, v)); }
@@ -1259,13 +1282,24 @@ public class Main extends ApplicationAdapter {
         return n.outputsTo(dirFromNeighborToThis);
     }
 
+    private void placeTile(int x, int y, int rot, int tile){
+        world.grid[x][y] = tile;
+        world.rot[x][y] = rot;
+
+        if (tile == WorldGrid.TILE_CONVEYOR) {
+            int upgraded = tileWorld.decideAutoTileForConveyor(x, y, rot);
+            world.grid[x][y] = upgraded;
+        }
+        tileWorld.rebuildEntityAt(x, y);
+    }
+
     public void doGetPlacement() {
         if (!hoverValid) return;
         if (player.blocksCell(world, hoverCellX, hoverCellY)) { return; }
 
         // Left click = place
         if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-            if (world.grid[hoverCellX][hoverCellY] == WorldGrid.TILE_EMPTY) {
+            if (world.grid[hoverCellX][hoverCellY] == WorldGrid.TILE_EMPTY)                                                                  {
                 if (!isManuallyPlaceable(selectedTile)) return;
 
                 float cost = getTileCost(selectedTile);

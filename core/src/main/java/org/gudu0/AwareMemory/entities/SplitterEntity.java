@@ -36,7 +36,8 @@ public final class SplitterEntity extends TileEntity {
 
     @Override
     public void step(TileWorld world, int currentTick) {
-        moveAcc += subcellsPerSecond * world.fixedDt();
+        moveAcc += subcellsPerSecond * world.fixedDt() * world.getItemSpeedMul();
+
         int passes = (int) moveAcc;
         if (passes <= 0) return;
         moveAcc -= passes;

@@ -72,7 +72,8 @@ public final class ConveyorEntity extends TileEntity {
     public void step(TileWorld world, int currentTick) {
         int[][] base = pathBase();
 
-        moveAcc += subcellsPerSecond * world.fixedDt();
+        moveAcc += subcellsPerSecond * world.fixedDt() * world.getItemSpeedMul();
+
         int passes = (int) moveAcc;
         if (passes <= 0) return;
         moveAcc -= passes;

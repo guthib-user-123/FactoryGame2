@@ -13,7 +13,7 @@ public final class RollerEntity extends TileEntity {
     // - processTimeLeft counts down while item stays in that cell
     // - hasCompletedSmelt means conversion has been applied; item may still be sitting in the cell until it can move forward
 
-    public float processTime = 1.75f; // tune
+    public float processTime = 2.00f; // tune
     public float outputValueMultiplier = 2.0f;
 
     private int activeProcessItemID = EMPTY;
@@ -43,7 +43,7 @@ public final class RollerEntity extends TileEntity {
     @Override
     public void step(TileWorld world, int currentTick) {
         tickProcessing(world);
-        subcellMoveAccumulator += subcellsPerSecond * world.fixedDt();
+        subcellMoveAccumulator += subcellsPerSecond * world.fixedDt() * world.getItemSpeedMul();
         int subcellSteps = (int) subcellMoveAccumulator;
         if (subcellSteps <= 0) return;
         subcellMoveAccumulator -= subcellSteps;

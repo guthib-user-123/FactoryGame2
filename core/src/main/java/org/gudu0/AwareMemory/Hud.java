@@ -244,6 +244,10 @@ public class Hud {
         return hudX >= hotbarX && hudX <= hotbarX + hotbarWidth && hudY >= hotbarY && hudY <= hotbarY + barH;
     }
 
+    public BitmapFont getSmallFont() {
+        return smallFont;
+    }
+
     // ---------- Filter Methods ---------
     // Returns the Y (bottom) of the first row's value box
     private float firstRowY() {
